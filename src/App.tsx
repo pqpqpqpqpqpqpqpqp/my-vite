@@ -1,9 +1,9 @@
-import Schedule from "./pages/Schedule"
+import ScheduleMap from "./pages/ScheduleMap"
 
 function App() {
   return (
     <>
-      <Schedule />
+      <ScheduleMap />
     </>
   )
 }
