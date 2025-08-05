@@ -1,28 +1,26 @@
 import { useEffect } from 'react';
 import { Map as GoogleMap, Marker, useMap } from '@vis.gl/react-google-maps';
-import type { TripDetail } from '../pages/ScheduleMap';
-
-interface MapContainerProps {
-    selectedDay: number;
-    tripGroupByOrder: Map<number, TripDetail[]>;
-    defaultCenter: { lat: number; lng: number };
-}
+import type { MapContainerProps } from '../types';
 
 function MapContainer({
-    selectedDay,
-    tripGroupByOrder,
+    selectedDayTrips,
+    focusedPlace,
     defaultCenter,
 }: MapContainerProps) {
     const map = useMap();
 
     useEffect(() => {
-        if (!map) return;
+        console.log('map 로드', map);
+    }, [map]);
 
-        const firstPlace = tripGroupByOrder.get(selectedDay)?.[0];
-        if (firstPlace) {
-            map.panTo({ lat: firstPlace.placeLat, lng: firstPlace.placeLng });
-        }
-    }, [map, selectedDay]);
+    useEffect(() => {
+        if(!selectedDayTrips) return;
+        map?.panTo({ lat: selectedDayTrips[0].placeLat, lng: selectedDayTrips[0].placeLng });
+    }, [map, selectedDayTrips]);
+
+    useEffect(() => {
+        map?.panTo({ lat: focusedPlace.placeLat, lng: focusedPlace.placeLng })
+    }, [focusedPlace])
 
     return (
         <GoogleMap
@@ -30,7 +28,7 @@ function MapContainer({
             defaultZoom={15}
             disableDefaultUI
         >
-            {tripGroupByOrder.get(selectedDay)?.map((place, index) => (
+            {selectedDayTrips?.map((place, index) => (
                 <Marker
                     key={index}
                     position={{ lat: place.placeLat, lng: place.placeLng }}
@@ -47,8 +45,24 @@ function MapContainer({
                         fillColor: '#0000FF',
                         fillOpacity: 1,
                     }}
+                    onClick={() => map?.panTo({ lat: place.placeLat, lng: place.placeLng })}
                 />
             ))}
+            {focusedPlace && (
+                <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white shadow-xl rounded-2xl p-4 w-49/50 z-10 flex space-x-4">
+                    <div className="w-18 h-24 flex-shrink-0 bg-amber-300 rounded-xl overflow-hidden">
+                    </div>
+
+                    <div className="flex flex-col">
+                        <div className="text-xl font-semibold text-gray-900 mb-1">
+                            {focusedPlace.placeName}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                            {focusedPlace.placeMemo || '메모가 없습니다.'}
+                        </div>
+                    </div>
+                </div>
+            )}
         </GoogleMap>
     );
 }
