@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { APIProvider } from '@vis.gl/react-google-maps';
-import Header from '../components/Header';
-import MapContainer from '../components/MapContainer';
-import type { TripDetail } from '../types';
+import TripPlanSidebar from '../../components/trips/TripPlanSidebar';
+import TripPlanMap from '../../components/trips/TripPlanMap';
+import type { TripDetail } from '../../types/trip';
 
 const tripData = {
     title: '서울 여행',
@@ -158,7 +158,7 @@ tripDetailData.forEach(item => {
     tripGroupByOrder.get(key)!.push(item);
 });
 
-function ScheduleMap() {
+function TripPlanView() {
     const [selectedDay, setSelectedDay] = useState(1);
     const [focusedPlace, setFocusedPlace] = useState<TripDetail>(tripDetailData[0]);
 
@@ -170,78 +170,25 @@ function ScheduleMap() {
     }, [selectedDay])
 
     return (
-        <div className="h-screen flex flex-col">
-            <Header />
+        <div className="h-full flex flex-col">
             <main className="flex flex-1 overflow-hidden">
-                <aside className="w-90 bg-gray-100 p-6 overflow-y-auto">
-                    <div className="mb-6 border-b">
-                        <h1 className="text-2xl font-bold">{tripData.title}</h1>
-                        <p className="text-gray-500 text-sm">
-                            {tripData.startDate} ~ {tripData.endDate}
-                        </p>
-                    </div>
-                    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                        {[...tripGroupByOrder.keys()].map((day) => {
-                            const isSelected = selectedDay === day;
-                            return (
-                                <div key={day} className="transition-all border-b last:border-none">
-                                    <div
-                                        onClick={() => setSelectedDay(day)}
-                                        className={`
-                                            px-6 py-4 cursor-pointer flex items-center justify-between
-                                            transition-colors duration-200
-                                            ${isSelected ? 'bg-blue-100 text-blue-800 font-semibold' : 'hover:bg-gray-50'}
-                                        `}
-                                    >
-                                        <span>{day}일차</span>
-                                        {isSelected && (
-                                            <svg
-                                                className="w-4 h-4 text-blue-600"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth={2}
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        )}
-                                    </div>
-
-                                    {isSelected && (
-                                        <div className="bg-gray-50">
-                                            {tripGroupByOrder.get(day)?.map((place) => (
-                                                <div
-                                                    key={place.orderInDay}
-                                                    className="flex justify-between items-center p-4 bg-white hover:bg-gray-100 transition rounded-md shadow-sm m-2"
-                                                    onClick={() => setFocusedPlace(place)}
-                                                >
-                                                    <div className="font-medium text-gray-800">{place.placeName}</div>
-                                                    <div className="text-sm text-gray-500">{place.visitTime}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </aside>
-
-                <div className="flex-1">
-                    <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-                        <MapContainer
-                            selectedDayTrips={tripGroupByOrder.get(selectedDay)}
-                            focusedPlace={focusedPlace}
-                            defaultCenter={{
-                                lat: tripDetailData[0].placeLat,
-                                lng: tripDetailData[0].placeLng
-                            }}
-                        />
-                    </APIProvider>
-                </div>
+                <TripPlanSidebar
+                    tripData={tripData}
+                    tripGroupByOrder={tripGroupByOrder}
+                    selectedDay={selectedDay}
+                    setSelectedDay={setSelectedDay}
+                    setFocusedPlace={setFocusedPlace}
+                />
+                <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                    <TripPlanMap
+                        selectedDayTrips={tripGroupByOrder.get(selectedDay) ?? []}
+                        focusedPlace={focusedPlace}
+                        setFocusedPlace={setFocusedPlace}
+                    />
+                </APIProvider>
             </main>
         </div>
     );
 }
 
-export default ScheduleMap;
+export default TripPlanView;

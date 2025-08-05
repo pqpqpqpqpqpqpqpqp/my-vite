@@ -1,34 +1,33 @@
-import { useEffect } from 'react';
-import { Map as GoogleMap, Marker, useMap } from '@vis.gl/react-google-maps';
-import type { MapContainerProps } from '../types';
+import { useEffect } from "react";
+import { Map as GoogleMap, Marker, useMap, ControlPosition } from "@vis.gl/react-google-maps";
+import type { TripPlanMapProps } from "../../types/trip";
 
-function MapContainer({
+const TripPlanMap = ({
     selectedDayTrips,
     focusedPlace,
-    defaultCenter,
-}: MapContainerProps) {
+    setFocusedPlace
+}: TripPlanMapProps) => {
+
     const map = useMap();
 
     useEffect(() => {
-        console.log('map 로드', map);
-    }, [map]);
-
-    useEffect(() => {
-        if(!selectedDayTrips) return;
-        map?.panTo({ lat: selectedDayTrips[0].placeLat, lng: selectedDayTrips[0].placeLng });
-    }, [map, selectedDayTrips]);
-
-    useEffect(() => {
-        map?.panTo({ lat: focusedPlace.placeLat, lng: focusedPlace.placeLng })
+        map?.panTo({
+            lat: focusedPlace.placeLat,
+            lng: focusedPlace.placeLng
+        })
     }, [focusedPlace])
 
     return (
         <GoogleMap
-            defaultCenter={defaultCenter}
+            defaultCenter={{ lat: selectedDayTrips[0].placeLat, lng: selectedDayTrips[0].placeLng }}
             defaultZoom={15}
             disableDefaultUI
+            zoomControl={true}
+            zoomControlOptions={{
+                position: ControlPosition.RIGHT_TOP
+            }}
         >
-            {selectedDayTrips?.map((place, index) => (
+            {selectedDayTrips.map((place, index) => (
                 <Marker
                     key={index}
                     position={{ lat: place.placeLat, lng: place.placeLng }}
@@ -45,7 +44,7 @@ function MapContainer({
                         fillColor: '#0000FF',
                         fillOpacity: 1,
                     }}
-                    onClick={() => map?.panTo({ lat: place.placeLat, lng: place.placeLng })}
+                    onClick={() => setFocusedPlace(place)}
                 />
             ))}
             {focusedPlace && (
@@ -65,6 +64,6 @@ function MapContainer({
             )}
         </GoogleMap>
     );
-}
+};
 
-export default MapContainer;
+export default TripPlanMap;
