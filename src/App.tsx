@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom"
 import Header from "./components/Header"
 import TripPlanView from "./pages/trips/TripPlanView"
+import TripPlanMake from "./pages/trips/TripPlanMake"
 
 function App() {
   return (
@@ -8,7 +9,8 @@ function App() {
       <Header />
       <div className="flex-1 overflow-hidden">
         <Routes>
-          <Route path='/trips/plan' element={<TripPlanView />} />
+          <Route path='/trip/plan' element={<TripPlanView />} />
+          <Route path='/trip/make' element={<TripPlanMake />} />
         </Routes>
       </div>
     </div>
