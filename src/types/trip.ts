@@ -1,7 +1,7 @@
 export interface TripData {
-  title: string;
-  startDate: string;
-  endDate: string;
+    title: string;
+    startDate: string;
+    endDate: string;
 };
 
 export interface TripDetail {
@@ -27,3 +27,9 @@ export interface TripPlanMapProps {
     focusedPlace: TripDetail;
     setFocusedPlace: (place: TripDetail) => void;
 }
+
+export interface Suggestion {
+    placeId: string;
+    name: string;
+    types: string[];
+};

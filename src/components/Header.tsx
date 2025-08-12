@@ -5,8 +5,8 @@ function Header() {
     return (
         <header className="px-5 py-4 flex justify-between flex-shrink-0">
             <div className="font-bold">My Application</div>
-            <Link to="/trip/plan" className="text-blue-600 hover:underline">Trip Plan</Link>
-            <Link to="/trip/make" className="text-blue-600 hover:underline">Make Trip</Link>
+            <Link to="/trip/plan/view" className="text-blue-600 hover:underline">Trip Plan</Link>
+            <Link to="/trip/plan/select" className="text-blue-600 hover:underline">Select Location</Link>
             <HiMenu className="text-2xl cursor-pointer" />
         </header>
     );

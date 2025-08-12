@@ -1,11 +1,11 @@
 import type { TripPlanSidebarProps } from "../../types/trip";
 
-const TripPlanSidebar = ({ 
+export default function TripPlanSidebar({
     tripData,
     tripGroupByOrder,
     selectedDay,
     setSelectedDay,
-    setFocusedPlace }: TripPlanSidebarProps) => {
+    setFocusedPlace }: TripPlanSidebarProps) {
     return (
         <aside className="min-w-80 bg-gray-100 p-6 h-full">
             <div className="mb-6 border-b">
@@ -54,5 +54,3 @@ const TripPlanSidebar = ({
         </aside>
     );
 };
-
-export default TripPlanSidebar;

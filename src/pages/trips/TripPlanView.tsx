@@ -158,7 +158,7 @@ tripDetailData.forEach(item => {
     tripGroupByOrder.get(key)!.push(item);
 });
 
-function TripPlanView() {
+export default function TripPlanView() {
     const [selectedDay, setSelectedDay] = useState(1);
     const [focusedPlace, setFocusedPlace] = useState<TripDetail>(tripDetailData[0]);
 
@@ -190,5 +190,3 @@ function TripPlanView() {
         </div>
     );
 }
-
-export default TripPlanView;
