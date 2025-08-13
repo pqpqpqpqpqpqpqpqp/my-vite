@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { placeApiLoader } from "../../api/PlaceApiLoader";
-import { Toaster, toast } from "sonner";
-import type { Suggestion } from "../../types/trip";
+import type { TripPlace } from "../../types/trip";
 
 export default function TripPlanSelect() {
     const [searchText, setSearchText] = useState("");
-    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [suggestions, setSuggestions] = useState<TripPlace[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [selectedPlaces, setSelectedPlaces] = useState<Suggestion[]>([]);
+    const [selectedPlaces, setSelectedPlaces] = useState<TripPlace[]>([]);
 
     const navi = useNavigate();
 
@@ -60,7 +59,7 @@ export default function TripPlanSelect() {
         return () => clearTimeout(timer);
     }, [searchText]);
 
-    const handleSelect = (suggestion: Suggestion) => {
+    const handleSelect = (suggestion: TripPlace) => {
         const placeId = suggestion.placeId || "";
 
         if (placeId && !selectedPlaces.some(place => place.placeId === placeId)) {
@@ -84,7 +83,7 @@ export default function TripPlanSelect() {
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
-            <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">일정 만들기</h1>
+            <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">장소 선택</h1>
 
             <input
                 type="text"
@@ -99,7 +98,7 @@ export default function TripPlanSelect() {
                 <ul className="border rounded mb-4">
                     {suggestions.map((s, i) => (
                         <li
-                            key={i}
+                            key={s.placeId}
                             className={`p-2 cursor-pointer ${i === activeIndex ? "bg-gray-200" : ""}`}
                             onMouseEnter={() => setActiveIndex(i)}
                             onClick={() => handleSelect(s)}
@@ -107,6 +106,7 @@ export default function TripPlanSelect() {
                             {s.name}
                         </li>
                     ))}
+
                 </ul>
             )}
 
@@ -133,27 +133,21 @@ export default function TripPlanSelect() {
                 ))}
             </ul>
 
-
             <button
+                disabled={selectedPlaces.length === 0}
                 className={`mt-4 w-full py-2 rounded
                     ${selectedPlaces.length === 0
-                        ? "bg-gray-400"
+                        ? "bg-gray-400 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 text-white"
                     }`}
                 onClick={() => {
-                    if (selectedPlaces.length === 0) {
-                        toast.warning('먼저 장소를 선택해주세요');
-                    } else {
-                        navi("/trip/plan/schedule", {
-                            state: { selectedPlaces }
-                        });
-                    }
+                    navi("/trip/plan/schedule", {
+                        state: { selectedPlaces }
+                    });
                 }}
             >
                 일정 정하기
             </button>
-
-            <Toaster richColors />
         </div>
     );
 }

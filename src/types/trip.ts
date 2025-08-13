@@ -4,7 +4,8 @@ export interface TripData {
     endDate: string;
 };
 
-export interface TripDetail {
+export interface TripDetailData {
+    placeId: string;
     dayOrder: number;
     placeName: string;
     placeLat: number;
@@ -16,20 +17,26 @@ export interface TripDetail {
 
 export interface TripPlanSidebarProps {
     tripData: TripData;
-    tripGroupByOrder: Map<number, TripDetail[]>;
+    tripDetailDataGroupingDay: Map<number, TripDetailData[]>;
     selectedDay: number;
     setSelectedDay: (day: number) => void;
-    setFocusedPlace: (place: TripDetail) => void;
+    setFocusedPlace: (place: TripDetailData) => void;
 };
 
 export interface TripPlanMapProps {
-    selectedDayTrips: TripDetail[];
-    focusedPlace: TripDetail;
-    setFocusedPlace: (place: TripDetail) => void;
+    tripDetailDataGroupingDay: Map<number, TripDetailData[]>;
+    selectedDay: number;
+    focusedPlace: TripDetailData;
+    setFocusedPlace: (place: TripDetailData) => void;
 }
 
-export interface Suggestion {
+export interface TripPlace {
     placeId: string;
     name: string;
     types: string[];
+};
+
+export interface TripDaySchedule {
+    day: number;
+    places: TripDetailData[];
 };
