@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { APIProvider, Map as GoogleMap, Marker, useMap, ControlPosition } from "@vis.gl/react-google-maps";
+import { APIProvider, Map as GoogleMap, Marker, useMap, ControlPosition, InfoWindow } from "@vis.gl/react-google-maps";
 import type { TripPlanMapProps } from "../../types/trip";
 
 function TripPlanInner({
@@ -55,6 +55,8 @@ function TripPlanInner({
     }, [map, tripDetailDataSelectedDay]);
 
     useEffect(() => {
+        if (!focusedPlace || !map) return;
+
         map?.panTo({
             lat: focusedPlace.placeLat,
             lng: focusedPlace.placeLng
@@ -87,17 +89,14 @@ function TripPlanInner({
             ))}
 
             {focusedPlace && (
-                <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 bg-white shadow-xl rounded-2xl p-4 w-49/50 z-10 flex space-x-4">
-                    <div className="w-18 h-24 flex-shrink-0 bg-amber-300 rounded-xl overflow-hidden" />
-                    <div className="flex flex-col">
-                        <div className="text-xl font-semibold text-gray-900 mb-1">
-                            {focusedPlace.placeName}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                            {focusedPlace.placeMemo || '메모가 없습니다.'}
-                        </div>
+                <InfoWindow
+                    position={{ lat: focusedPlace.placeLat, lng: focusedPlace.placeLng }}
+                    headerContent={<div className="font-semibold text-base">{focusedPlace.placeName}</div>}
+                >
+                    <div className="text-sm font-medium text-gray-600">
+                        {focusedPlace.placeMemo || '메모가 없습니다.'}
                     </div>
-                </div>
+                </InfoWindow>
             )}
         </>
     );

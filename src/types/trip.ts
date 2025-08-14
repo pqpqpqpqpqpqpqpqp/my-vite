@@ -26,7 +26,7 @@ export interface TripPlanSidebarProps {
 export interface TripPlanMapProps {
     tripDetailDataGroupingDay: Map<number, TripDetailData[]>;
     selectedDay: number;
-    focusedPlace: TripDetailData;
+    focusedPlace?: TripDetailData;
     setFocusedPlace: (place: TripDetailData) => void;
 }
 
