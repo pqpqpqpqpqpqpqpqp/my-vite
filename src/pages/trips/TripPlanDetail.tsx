@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import TripPlanMap from "../../components/trips/TripPlanMap";
 import TripPlaceSearchModal from "../../components/trips/TripPlaceSearchModal";
-import type { TripPlace, TripDetailData } from "../../types/trip";
+import type { TripDetailData } from "../../types/trip";
 
 export default function TripPlanDetail() {
     const navi = useNavigate();
@@ -13,6 +13,8 @@ export default function TripPlanDetail() {
     const [selectedDay, setSelectedDay] = useState(1);
     const [tripDetailDataGroupingDay, setTripDetailDataGroupingDay] = useState(new Map<number, TripDetailData[]>());
     const [focusedPlace, setFocusedPlace] = useState<TripDetailData | undefined>(undefined);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
         <div className="w-fit mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
@@ -37,7 +39,6 @@ export default function TripPlanDetail() {
                                     onClick={() => setFocusedPlace(place)}
                                 >
                                     <div className="font-medium text-gray-800">{place.placeName}</div>
-                                    <div className="text-sm text-gray-500">{place.visitTime}</div>
                                 </div>
                             ))
                         ) : (
@@ -46,7 +47,8 @@ export default function TripPlanDetail() {
                         <button
                             className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             onClick={() => {
-                                
+                                setSelectedDay(dayNumber);
+                                setIsModalOpen(true);
                             }}
                         >
                             장소 추가
@@ -54,6 +56,24 @@ export default function TripPlanDetail() {
                     </div>
                 );
             })}
+
+            {isModalOpen && (
+                <TripPlaceSearchModal
+                    selectedPlaces={selectedPlaces}
+                    selectedDay={selectedDay}
+                    setTripDetailDataGroupingDay={setTripDetailDataGroupingDay}
+                    onClose={() => setIsModalOpen(false)}
+                />
+            )}
+
+            <button
+                className="mt-6 w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                onClick={() => {
+                    navi("/");
+                }}
+            >
+                일정 만들기 완료
+            </button>
         </div>
     );
 }

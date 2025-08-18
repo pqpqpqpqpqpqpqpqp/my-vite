@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { placeApiLoader } from "../../api/PlaceApiLoader";
-import type { TripPlace } from "../../types/trip";
+import type { TripPlace, TripPlaceData } from "../../types/trip";
 
 export default function TripPlanSelect() {
     const [searchText, setSearchText] = useState("");
     const [suggestions, setSuggestions] = useState<TripPlace[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [selectedPlaces, setSelectedPlaces] = useState<TripPlace[]>([]);
+    const [selectedPlaces, setSelectedPlaces] = useState<TripPlaceData[]>([]);
 
     const navi = useNavigate();
 
@@ -42,8 +42,7 @@ export default function TripPlanSelect() {
 
                     const simplifiedSuggestions = filtered.map(s => ({
                         placeId: s.placePrediction?.placeId || "",
-                        name: s.placePrediction?.text?.text || "",
-                        types: s.placePrediction?.types || [],
+                        placeName: s.placePrediction?.text?.text || "",
                     }));
 
                     setSuggestions(simplifiedSuggestions);
@@ -59,11 +58,31 @@ export default function TripPlanSelect() {
         return () => clearTimeout(timer);
     }, [searchText]);
 
-    const handleSelect = (suggestion: TripPlace) => {
+    const handleSelect = async (suggestion: TripPlace) => {
+        const { Place } = await placeApiLoader.importLibrary("places");
         const placeId = suggestion.placeId || "";
 
         if (placeId && !selectedPlaces.some(place => place.placeId === placeId)) {
-            setSelectedPlaces((prev) => [...prev, suggestion]);
+            const detailPlace = await new Place({ id: placeId }).fetchFields({ fields: ['formattedAddress', 'types', 'location'] });
+            const types = detailPlace.place.types || [];
+            const matchedType = types.find(t => [
+                "country",
+                "administrative_area_level_1",
+                "locality"
+            ].includes(t));
+
+            console.log(detailPlace);
+
+            if (detailPlace.place) {
+                setSelectedPlaces((prev) => [...prev, {
+                    placeId: placeId,
+                    placeName: suggestion.placeName || "",
+                    address: detailPlace.place.formattedAddress || "",
+                    placeType: matchedType || "political",
+                    placeLat: detailPlace.place.location?.lat() || 0,
+                    placeLng: detailPlace.place.location?.lng() || 0,
+                }]);
+            }
         }
 
         setSearchText("");
@@ -103,7 +122,7 @@ export default function TripPlanSelect() {
                             onMouseEnter={() => setActiveIndex(i)}
                             onClick={() => handleSelect(s)}
                         >
-                            {s.name}
+                            {s.placeName}
                         </li>
                     ))}
 
@@ -117,7 +136,7 @@ export default function TripPlanSelect() {
                         key={place.placeId}
                         className="bg-gray-200 px-3 pt-1 pb-2 mb-2 rounded flex items-baseline justify-between"
                     >
-                        {place.name}
+                        {place.placeName}
                         <button
                             onClick={() => {
                                 setSelectedPlaces((prev) =>
@@ -125,7 +144,7 @@ export default function TripPlanSelect() {
                                 );
                             }}
                             className="text-red-600 hover:text-red-800 transition-colors duration-200 text-2xl font-bold leading-none"
-                            aria-label={`Delete ${place.name}`}
+                            aria-label={`Delete ${place.placeName}`}
                         >
                             &times;
                         </button>

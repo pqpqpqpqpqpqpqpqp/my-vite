@@ -11,8 +11,8 @@ export interface TripDetailData {
     placeLat: number;
     placeLng: number;
     orderInDay: number;
-    visitTime: string;
-    placeMemo: string;
+    visitTime?: string;
+    placeMemo?: string;
 }
 
 export interface TripPlanSidebarProps {
@@ -32,11 +32,24 @@ export interface TripPlanMapProps {
 
 export interface TripPlace {
     placeId: string;
-    name: string;
-    types: string[];
+    placeName: string;
 };
+
+export interface TripPlaceData extends TripPlace {
+    address: string;
+    placeType: string;
+    placeLat: number;
+    placeLng: number;
+}
 
 export interface TripDaySchedule {
     day: number;
     places: TripDetailData[];
 };
+
+export interface TripPlaceSearchModalProps {
+    selectedPlaces: TripPlace[];
+    selectedDay: number;
+    setTripDetailDataGroupingDay: (dayData: Map<number, TripDetailData[]>) => void;
+    onClose: () => void;
+}
