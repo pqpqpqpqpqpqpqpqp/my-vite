@@ -17,8 +17,8 @@ export default function TripPlanDetail() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
-        <div className="w-fit mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
-            <div className="w-96 h-96">
+        <div className="w-2xl mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
+            <div className="w-full h-96 mb-3">
                 <TripPlanMap
                     tripDetailDataGroupingDay={tripDetailDataGroupingDay}
                     selectedDay={selectedDay}
@@ -38,7 +38,10 @@ export default function TripPlanDetail() {
                                 <div
                                     key={place.orderInDay}
                                     className="p-4 bg-white rounded-md shadow-sm mb-2 hover:bg-gray-100 cursor-pointer"
-                                    onClick={() => setFocusedPlace(place)}
+                                    onClick={() => {
+                                        setFocusedPlace(place)
+                                        setSelectedDay(dayNumber);
+                                    }}
                                 >
                                     <div className="font-medium text-gray-800">{place.placeName}</div>
                                 </div>
@@ -63,6 +66,7 @@ export default function TripPlanDetail() {
                 <TripPlaceSearchModal
                     selectedPlaces={selectedPlaces}
                     selectedDay={selectedDay}
+                    tripDetailDataGroupingDay={tripDetailDataGroupingDay}
                     setTripDetailDataGroupingDay={setTripDetailDataGroupingDay}
                     onClose={() => setIsModalOpen(false)}
                 />

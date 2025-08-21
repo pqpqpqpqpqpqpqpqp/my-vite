@@ -25,8 +25,10 @@ export default function TripPlanSchedule() {
     }
 
     return (
-        <div className="w-fit mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
-            <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">일정 선택</h1>
+        <div className="w-fit min-h-screen bg-white p-4 justify-center items-center mx-auto">
+            <div className="flex items-center space-x-2 mb-6">
+                <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">일정 선택</h1>
+            </div>
             <DayPicker
                 mode="range"
                 selected={selectedDays}
@@ -45,11 +47,11 @@ export default function TripPlanSchedule() {
                     </strong>
                 )}
             </p>
-            
+
             <button
                 className={`mt-4 w-full py-2 rounded ${selectedDays?.from && selectedDays?.to
-                        ? "bg-blue-600 hover:bg-blue-700 text-white"
-                        : "bg-gray-400 cursor-not-allowed text-gray-200"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-400 cursor-not-allowed text-gray-200"
                     }`}
                 disabled={!(selectedDays?.from && selectedDays?.to)}
                 onClick={() => {

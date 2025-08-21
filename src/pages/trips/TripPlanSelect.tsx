@@ -53,7 +53,7 @@ export default function TripPlanSelect() {
             }
 
             handleSuggestion();
-        }, 500);
+        }, 1000);
 
         return () => clearTimeout(timer);
     }, [searchText, placesLib]);
@@ -104,72 +104,68 @@ export default function TripPlanSelect() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-md">
-            <h1 className="text-2xl font-semibold mb-6 text-center text-gray-900">
-                장소 선택
-            </h1>
+        <div className="flex flex-col items-center p-4 min-h-screen bg-gray-100">
+            <div className="w-full max-w-md">
 
-            <input
-                type="text"
-                className="w-full p-4 border border-gray-300 rounded-xl mb-4 bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
-                placeholder="도시나 국가 입력..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={handleKeyDown}
-            />
+                <input
+                    type="text"
+                    className="w-full p-4 border border-gray-300 rounded-xl bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
+                    placeholder="도시나 국가 입력..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
 
-            {suggestions.length > 0 && (
-                <ul className="border border-gray-200 rounded-xl overflow-hidden mb-6 bg-white text-base">
-                    {suggestions.map((s, i) => (
+                {suggestions.length > 0 && (
+                    <ul className="mt-2 rounded-xl bg-white shadow-lg">
+                        {suggestions.map((s, i) => (
+                            <li
+                                key={s.placeId}
+                                className={`flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 ${i === activeIndex ? "bg-gray-100" : ""}`}
+                                onMouseEnter={() => setActiveIndex(i)}
+                                onClick={() => handleSelect(s)}
+                            >
+                                {s.placeName}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+
+                <h2 className="font-medium my-3 text-gray-800 text-lg">선택된 장소</h2>
+                <ul className="space-y-1">
+                    {selectedPlaces.map((place) => (
                         <li
-                            key={s.placeId}
-                            className={`p-3 cursor-pointer hover:bg-gray-100 transition-colors ${i === activeIndex ? "bg-gray-100" : ""
-                                }`}
-                            onMouseEnter={() => setActiveIndex(i)}
-                            onClick={() => handleSelect(s)}
+                            key={place.placeId}
+                            className="flex justify-between items-center bg-gray-50 rounded-xl p-3 shadow-sm"
                         >
-                            {s.placeName}
+                            <span>{place.placeName}</span>
+                            <button
+                                onClick={() => {
+                                    setSelectedPlaces((prev) =>
+                                        prev.filter((p) => p.placeId !== place.placeId)
+                                    );
+                                }}
+                                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                                aria-label={`Delete ${place.placeName}`}
+                            >
+                                삭제
+                            </button>
                         </li>
                     ))}
                 </ul>
-            )}
 
-            <h2 className="font-medium mb-3 text-gray-800 text-lg">선택된 장소</h2>
-            <ul className="space-y-3">
-                {selectedPlaces.map((place) => (
-                    <li
-                        key={place.placeId}
-                        className="flex justify-between items-center bg-gray-50 rounded-xl p-3 shadow-sm"
-                    >
-                        <span>{place.placeName}</span>
-                        <button
-                            onClick={() => {
-                                setSelectedPlaces((prev) =>
-                                    prev.filter((p) => p.placeId !== place.placeId)
-                                );
-                            }}
-                            className="text-red-500 hover:text-red-700 text-xl font-semibold"
-                            aria-label={`Delete ${place.placeName}`}
-                        >
-                            &times;
-                        </button>
-                    </li>
-                ))}
-            </ul>
-
-            <button
-                disabled={selectedPlaces.length === 0}
-                className={`mt-5 w-full py-3 rounded-xl text-base font-medium transition-colors
-            ${selectedPlaces.length === 0
-                        ? "bg-gray-300 cursor-not-allowed"
-                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
-                    }`}
-                onClick={() => {
-                    navi("/trip/plan/schedule", { state: { selectedPlaces } });
-                }}
-            >
-                일정 정하기
-            </button>
+                <button
+                    disabled={selectedPlaces.length === 0}
+                    className={`mt-5 w-full py-3 rounded-xl text-base font-medium transition-colors 
+                        ${selectedPlaces.length === 0 ? "bg-gray-300 cursor-not-allowed" : "bg-indigo-500 hover:bg-indigo-600 text-white"
+                        }`}
+                    onClick={() => {
+                        navi("/trip/plan/schedule", { state: { selectedPlaces } });
+                    }}
+                >
+                    일정 정하기
+                </button>
+            </div>
         </div>
     );
 }

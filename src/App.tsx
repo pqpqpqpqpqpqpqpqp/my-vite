@@ -10,7 +10,7 @@ function App() {
   return (
     <div className="w-screen h-screen flex flex-col">
       <Header />
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-scroll">
         <Routes>
           <Route path='/' element={<Home />} />
           <Route path='/trip/plan/view' element={<TripPlanView />} />

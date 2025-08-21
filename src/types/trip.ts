@@ -28,7 +28,7 @@ export interface TripPlanMapProps {
     selectedDay: number;
     focusedPlace?: TripDetailData;
     setFocusedPlace: (place: TripDetailData) => void;
-}
+};
 
 export interface TripPlace {
     placeId: string;
@@ -40,7 +40,7 @@ export interface TripPlaceData extends TripPlace {
     placeType: string;
     placeLat: number;
     placeLng: number;
-}
+};
 
 export interface TripDaySchedule {
     day: number;
@@ -50,6 +50,7 @@ export interface TripDaySchedule {
 export interface TripPlaceSearchModalProps {
     selectedPlaces: TripPlace[];
     selectedDay: number;
+    tripDetailDataGroupingDay: Map<number, TripDetailData[]>;
     setTripDetailDataGroupingDay: (dayData: Map<number, TripDetailData[]>) => void;
     onClose: () => void;
 }

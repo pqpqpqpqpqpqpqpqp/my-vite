@@ -6,6 +6,7 @@ export default function TripPlanSearchModal({
     onClose,
     selectedDay,
     selectedPlaces,
+    tripDetailDataGroupingDay,
     setTripDetailDataGroupingDay,
 }: TripPlaceSearchModalProps) {
     const [searchText, setSearchText] = useState("");
@@ -69,7 +70,6 @@ export default function TripPlanSearchModal({
 
         if (placeId && !selectedPlaces.some(place => place.placeId === placeId)) {
             const detailPlace = await new placesLib.Place({ id: placeId }).fetchFields({ fields: ['formattedAddress', 'primaryType', 'location'] });
-            console.log(detailPlace);
 
             if (detailPlace.place) {
                 setNewSelectedPlaces((prev) => [...prev, {
@@ -167,16 +167,25 @@ export default function TripPlanSearchModal({
                     <button
                         className="flex-1 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
                         onClick={() => {
+                            const existing1 = tripDetailDataGroupingDay.get(selectedDay) || [];
+                            const lastOrder = existing1.length > 0
+                                ? Math.max(...existing1.map(p => p.orderInDay))
+                                : 0;
+
                             const tripDetailDataList: TripDetailData[] = newSelectedPlaces.map((place, index) => ({
                                 placeId: place.placeId,
                                 dayOrder: selectedDay,
                                 placeName: place.placeName,
                                 placeLat: place.placeLat,
                                 placeLng: place.placeLng,
-                                orderInDay: index + 1,
+                                orderInDay: lastOrder + index + 1,
                             }));
 
-                            setTripDetailDataGroupingDay(new Map<number, TripDetailData[]>([[selectedDay, tripDetailDataList]]));
+                            const newMap = new Map(tripDetailDataGroupingDay);
+                            const existing = newMap.get(selectedDay) || [];
+                            newMap.set(selectedDay, [...existing, ...tripDetailDataList]);
+
+                            setTripDetailDataGroupingDay(newMap);
                             setNewSelectedPlaces([]);
                             setSearchText("");
                             onClose();
