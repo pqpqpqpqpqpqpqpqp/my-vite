@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { placeApiLoader } from "../../api/PlaceApiLoader";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { TripPlace, TripPlaceData, TripDetailData, TripPlaceSearchModalProps } from "../../types/trip";
 
 export default function TripPlanSearchModal({
@@ -12,6 +12,7 @@ export default function TripPlanSearchModal({
     const [suggestions, setSuggestions] = useState<TripPlace[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
     const [newSelectedPlaces, setNewSelectedPlaces] = useState<TripPlaceData[]>([]);
+    const placesLib = useMapsLibrary("places");
 
     useEffect(() => {
         if (!searchText) {
@@ -21,32 +22,35 @@ export default function TripPlanSearchModal({
 
         const timer = setTimeout(() => {
             async function handleSuggestion() {
-                const { Place, AutocompleteSuggestion } = await placeApiLoader.importLibrary("places");
-
-                const combineBounds = new google.maps.LatLngBounds();
-
-                selectedPlaces.forEach(async (place) => {
-                    const placeBound = await new Place({ id: place.placeId }).fetchFields({ fields: ['viewport'] });
-                    if (placeBound && placeBound.place.viewport) {
-                        combineBounds.union(placeBound.place.viewport);
-                    }
-                });
-
-                const AutoComReq = {
-                    input: searchText,
-                    language: 'ko',
-                    locationRestriction: combineBounds
-                };
-
+                if (!placesLib) return;
                 try {
-                    const res = await AutocompleteSuggestion.fetchAutocompleteSuggestions(AutoComReq);
+                    const results = await Promise.all(
+                        selectedPlaces.map(async (p) => {
+                            const place = await new placesLib.Place({ id: p.placeId }).fetchFields({ fields: ['viewport'] });
+                            const viewport = place.place?.viewport;
+                            if (!viewport) return [];
 
-                    console.log(res.suggestions);
+                            const AutoComReq = {
+                                input: searchText,
+                                language: 'ko',
+                                locationRestriction: viewport
+                            };
 
-                    setSuggestions(res.suggestions.map(s => ({
-                        placeId: s.placePrediction?.placeId || "",
-                        placeName: s.placePrediction?.text?.text || "",
-                    })));
+                            const res = await placesLib.AutocompleteSuggestion.fetchAutocompleteSuggestions(AutoComReq);
+                            return res.suggestions.map(s => ({
+                                placeId: s.placePrediction?.placeId || "",
+                                placeName: s.placePrediction?.mainText?.text || "",
+                            }));
+                        })
+                    );
+
+                    const merged = results.flat();
+
+                    const unique = Array.from(
+                        new Map(merged.map(s => [s.placeId, s])).values()
+                    );
+
+                    setSuggestions(unique);
                 } catch (error) {
                     console.error(error);
                     setSuggestions([]);
@@ -57,14 +61,14 @@ export default function TripPlanSearchModal({
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchText, selectedPlaces]);
+    }, [searchText, selectedPlaces, placesLib]);
 
     const handleSelect = async (suggestion: TripPlace) => {
-        const { Place } = await placeApiLoader.importLibrary("places");
+        if (!placesLib) return;
         const placeId = suggestion.placeId || "";
 
         if (placeId && !selectedPlaces.some(place => place.placeId === placeId)) {
-            const detailPlace = await new Place({ id: placeId }).fetchFields({ fields: ['displayName', 'formattedAddress', 'primaryType', 'location'] });
+            const detailPlace = await new placesLib.Place({ id: placeId }).fetchFields({ fields: ['formattedAddress', 'primaryType', 'location'] });
             console.log(detailPlace);
 
             if (detailPlace.place) {
@@ -72,7 +76,7 @@ export default function TripPlanSearchModal({
                     placeId: placeId,
                     placeName: suggestion.placeName || "",
                     address: detailPlace.place.formattedAddress || "",
-                    placeType: detailPlace.place.primaryType || "",
+                    placeType: detailPlace.place.primaryType || "locality",
                     placeLat: detailPlace.place.location?.lat() || 0,
                     placeLng: detailPlace.place.location?.lng() || 0,
                 }]);
@@ -95,79 +99,93 @@ export default function TripPlanSearchModal({
     };
 
     return (
-        <div className="max-w-xl mx-auto p-6 bg-white rounded-lg shadow-lg">
-            <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">
-                장소 검색 및 추가
-            </h1>
-
-            <input
-                type="text"
-                className="w-full p-2 border rounded mb-2"
-                placeholder="도시나 장소 입력..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={handleKeyDown}
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div
+                className="absolute inset-0 bg-black/50"
+                onClick={onClose}
             />
 
-            {suggestions.length > 0 && (
-                <ul className="border rounded mb-4 bg-gray-50">
-                    {suggestions.map((s, i) => (
+            <div className="relative z-10 w-full max-w-md bg-white rounded-2xl shadow-lg p-6">
+                <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">
+                    장소 검색 및 추가
+                </h1>
+
+                <input
+                    type="text"
+                    className="w-full p-2 border rounded mb-2"
+                    placeholder="도시나 장소 입력..."
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
+
+                {suggestions.length > 0 && (
+                    <ul className="border rounded mb-4 bg-gray-50 max-h-40 overflow-y-auto">
+                        {suggestions.map((s, i) => (
+                            <li
+                                key={s.placeId}
+                                className={`p-2 cursor-pointer hover:bg-gray-200 ${i === activeIndex ? "bg-gray-200" : ""
+                                    }`}
+                                onMouseEnter={() => setActiveIndex(i)}
+                                onClick={() => handleSelect(s)}
+                            >
+                                {s.placeName}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+
+                <h2 className="font-semibold mb-2">선택된 장소</h2>
+                <ul className="list-none">
+                    {newSelectedPlaces.map((place) => (
                         <li
-                            key={s.placeId}
-                            className={`p-2 cursor-pointer hover:bg-gray-200 ${i === activeIndex ? "bg-gray-200" : ""
-                                }`}
-                            onMouseEnter={() => setActiveIndex(i)}
-                            onClick={() => handleSelect(s)}
+                            key={place.placeId}
+                            className="bg-gray-100 px-3 py-2 mb-2 rounded flex items-center justify-between"
                         >
-                            {s.placeName}
+                            {place.placeName}
+                            <button
+                                onClick={() =>
+                                    setNewSelectedPlaces((prev) =>
+                                        prev.filter((p) => p.placeId !== place.placeId)
+                                    )
+                                }
+                                className="text-red-600 hover:text-red-800 font-bold"
+                            >
+                                &times;
+                            </button>
                         </li>
                     ))}
                 </ul>
-            )}
 
-            <h2 className="font-semibold mb-2">선택된 장소</h2>
-            <ul className="list-none">
-                {newSelectedPlaces.map((place) => (
-                    <li
-                        key={place.placeId}
-                        className="bg-gray-100 px-3 py-2 mb-2 rounded flex items-center justify-between"
+                <div className="flex gap-2 mt-4">
+                    <button
+                        className="flex-1 py-2 rounded bg-gray-300 hover:bg-gray-400 text-gray-800"
+                        onClick={onClose}
                     >
-                        {place.placeName}
-                        <button
-                            onClick={() =>
-                                setNewSelectedPlaces((prev) =>
-                                    prev.filter((p) => p.placeId !== place.placeId)
-                                )
-                            }
-                            className="text-red-600 hover:text-red-800 font-bold"
-                        >
-                            &times;
-                        </button>
-                    </li>
-                ))}
-            </ul>
+                        취소
+                    </button>
+                    <button
+                        className="flex-1 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => {
+                            const tripDetailDataList: TripDetailData[] = newSelectedPlaces.map((place, index) => ({
+                                placeId: place.placeId,
+                                dayOrder: selectedDay,
+                                placeName: place.placeName,
+                                placeLat: place.placeLat,
+                                placeLng: place.placeLng,
+                                orderInDay: index + 1,
+                            }));
 
-            <button
-                className="mt-4 w-full py-2 rounded bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => {
-                    const tripDetailDataList: TripDetailData[] = newSelectedPlaces.map((place, index) => ({
-                        placeId: place.placeId,
-                        dayOrder: selectedDay,
-                        placeName: place.placeName,
-                        placeLat: place.placeLat,
-                        placeLng: place.placeLng,
-                        orderInDay: index + 1,
-                    }));
-
-                    setTripDetailDataGroupingDay(new Map<number, TripDetailData[]>([[selectedDay, tripDetailDataList]]));
-                    setNewSelectedPlaces([]);
-                    setSearchText("");
-                    onClose();
-                }}
-            >
-                장소 선택 완료
-            </button>
+                            setTripDetailDataGroupingDay(new Map<number, TripDetailData[]>([[selectedDay, tripDetailDataList]]));
+                            setNewSelectedPlaces([]);
+                            setSearchText("");
+                            onClose();
+                        }}
+                    >
+                        장소 선택 완료
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }
-// 수정해야 할 사항: 모달창이 따로 나오지 않음, locationRestriction이 combineBound로는 작동하지 않음

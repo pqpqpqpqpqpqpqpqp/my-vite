@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { APIProvider, Map as GoogleMap, Marker, useMap, ControlPosition, InfoWindow } from "@vis.gl/react-google-maps";
+import { Map as GoogleMap, Marker, useMap, ControlPosition, InfoWindow } from "@vis.gl/react-google-maps";
 import type { TripPlanMapProps } from "../../types/trip";
 
-function TripPlanInner({
+export default function TripPlanMap({
     tripDetailDataGroupingDay,
     selectedDay,
     focusedPlace,
@@ -64,7 +64,18 @@ function TripPlanInner({
     }, [focusedPlace, map]);
 
     return (
-        <>
+        <GoogleMap
+            defaultCenter={{
+                lat: tripDetailDataSelectedDay?.[0]?.placeLat ?? 40.7580,
+                lng: tripDetailDataSelectedDay?.[0]?.placeLng ?? -73.9855,
+            }}
+            defaultZoom={15}
+            disableDefaultUI
+            zoomControl
+            zoomControlOptions={{
+                position: ControlPosition.RIGHT_TOP
+            }}
+        >
             {tripDetailDataSelectedDay?.map((place, index) => (
                 <Marker
                     key={index}
@@ -98,29 +109,6 @@ function TripPlanInner({
                     </div>
                 </InfoWindow>
             )}
-        </>
-    );
-}
-
-export default function TripPlanMap(props: TripPlanMapProps) {
-    const tripDetailDataSelectedDay = props.tripDetailDataGroupingDay.get(props.selectedDay);
-
-    return (
-        <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-            <GoogleMap
-                defaultCenter={{
-                    lat: tripDetailDataSelectedDay?.[0]?.placeLat ?? 40.7580,
-                    lng: tripDetailDataSelectedDay?.[0]?.placeLng ?? -73.9855,
-                }}
-                defaultZoom={15}
-                disableDefaultUI
-                zoomControl
-                zoomControlOptions={{
-                    position: ControlPosition.RIGHT_TOP
-                }}
-            >
-                <TripPlanInner {...props} />
-            </GoogleMap>
-        </APIProvider>
+        </GoogleMap>
     );
 }

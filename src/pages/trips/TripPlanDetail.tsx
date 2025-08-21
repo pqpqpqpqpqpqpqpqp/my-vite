@@ -18,12 +18,14 @@ export default function TripPlanDetail() {
 
     return (
         <div className="w-fit mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
-            <TripPlanMap
-                tripDetailDataGroupingDay={tripDetailDataGroupingDay}
-                selectedDay={selectedDay}
-                focusedPlace={focusedPlace}
-                setFocusedPlace={setFocusedPlace}
-            />
+            <div className="w-96 h-96">
+                <TripPlanMap
+                    tripDetailDataGroupingDay={tripDetailDataGroupingDay}
+                    selectedDay={selectedDay}
+                    focusedPlace={focusedPlace}
+                    setFocusedPlace={setFocusedPlace}
+                />
+            </div>
 
             {Array.from({ length: daysCount }, (_, i) => {
                 const dayNumber = i + 1;

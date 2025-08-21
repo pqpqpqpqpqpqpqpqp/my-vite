@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { placeApiLoader } from "../../api/PlaceApiLoader";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { TripPlace, TripPlaceData } from "../../types/trip";
 
 export default function TripPlanSelect() {
@@ -8,6 +8,7 @@ export default function TripPlanSelect() {
     const [suggestions, setSuggestions] = useState<TripPlace[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
     const [selectedPlaces, setSelectedPlaces] = useState<TripPlaceData[]>([]);
+    const placesLib = useMapsLibrary("places");
 
     const navi = useNavigate();
 
@@ -19,7 +20,6 @@ export default function TripPlanSelect() {
 
         const timer = setTimeout(() => {
             async function handleSuggestion() {
-                const { AutocompleteSuggestion } = await placeApiLoader.importLibrary("places");
 
                 const AutoComReq = {
                     input: searchText,
@@ -27,7 +27,7 @@ export default function TripPlanSelect() {
                 };
 
                 try {
-                    const res = await AutocompleteSuggestion.fetchAutocompleteSuggestions(AutoComReq);
+                    const res = await placesLib?.AutocompleteSuggestion.fetchAutocompleteSuggestions(AutoComReq);
 
                     const allowedTypes = [
                         "country",
@@ -35,14 +35,14 @@ export default function TripPlanSelect() {
                         "locality"
                     ];
 
-                    const filtered = (res.suggestions || []).filter(s => {
+                    const filtered = (res?.suggestions || []).filter(s => {
                         const types = s.placePrediction?.types || [];
                         return types.some(t => allowedTypes.includes(t));
                     });
 
                     const simplifiedSuggestions = filtered.map(s => ({
                         placeId: s.placePrediction?.placeId || "",
-                        placeName: s.placePrediction?.text?.text || "",
+                        placeName: s.placePrediction?.mainText?.text || "",
                     }));
 
                     setSuggestions(simplifiedSuggestions);
@@ -56,39 +56,42 @@ export default function TripPlanSelect() {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchText]);
+    }, [searchText, placesLib]);
 
     const handleSelect = async (suggestion: TripPlace) => {
-        const { Place } = await placeApiLoader.importLibrary("places");
+        if (!placesLib) return;
         const placeId = suggestion.placeId || "";
 
         if (placeId && !selectedPlaces.some(place => place.placeId === placeId)) {
-            const detailPlace = await new Place({ id: placeId }).fetchFields({ fields: ['formattedAddress', 'types', 'location'] });
-            const types = detailPlace.place.types || [];
-            const matchedType = types.find(t => [
-                "country",
-                "administrative_area_level_1",
-                "locality"
-            ].includes(t));
+            try {
+                const detailPlace = await new placesLib.Place({ id: placeId })
+                    .fetchFields({ fields: ["formattedAddress", "types", "location"] });
+                const types = detailPlace.place.types || [];
+                const matchedType = types.find(t => [
+                    "country",
+                    "administrative_area_level_1",
+                    "locality"
+                ].includes(t));
 
-            console.log(detailPlace);
-
-            if (detailPlace.place) {
-                setSelectedPlaces((prev) => [...prev, {
-                    placeId: placeId,
-                    placeName: suggestion.placeName || "",
-                    address: detailPlace.place.formattedAddress || "",
-                    placeType: matchedType || "political",
-                    placeLat: detailPlace.place.location?.lat() || 0,
-                    placeLng: detailPlace.place.location?.lng() || 0,
-                }]);
+                if (detailPlace.place) {
+                    setSelectedPlaces((prev) => [...prev, {
+                        placeId: placeId,
+                        placeName: suggestion.placeName || "",
+                        address: detailPlace.place.formattedAddress || "",
+                        placeType: matchedType || "political",
+                        placeLat: detailPlace.place.location?.lat() || 0,
+                        placeLng: detailPlace.place.location?.lng() || 0,
+                    }]);
+                }
+            } catch (err) {
+                console.error("Place fetch error:", err);
             }
-        }
 
-        setSearchText("");
-        setSuggestions([]);
-        setActiveIndex(-1);
-    };
+            setSearchText("");
+            setSuggestions([]);
+            setActiveIndex(-1);
+        };
+    }
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "ArrowDown") {
@@ -101,12 +104,14 @@ export default function TripPlanSelect() {
     };
 
     return (
-        <div className="max-w-xl mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
-            <h1 className="text-2xl font-semibold mb-4 text-center text-gray-800">장소 선택</h1>
+        <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl shadow-md">
+            <h1 className="text-2xl font-semibold mb-6 text-center text-gray-900">
+                장소 선택
+            </h1>
 
             <input
                 type="text"
-                className="w-full p-2 border rounded mb-2 bg-white"
+                className="w-full p-4 border border-gray-300 rounded-xl mb-4 bg-gray-50 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
                 placeholder="도시나 국가 입력..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -114,36 +119,36 @@ export default function TripPlanSelect() {
             />
 
             {suggestions.length > 0 && (
-                <ul className="border rounded mb-4">
+                <ul className="border border-gray-200 rounded-xl overflow-hidden mb-6 bg-white text-base">
                     {suggestions.map((s, i) => (
                         <li
                             key={s.placeId}
-                            className={`p-2 cursor-pointer ${i === activeIndex ? "bg-gray-200" : ""}`}
+                            className={`p-3 cursor-pointer hover:bg-gray-100 transition-colors ${i === activeIndex ? "bg-gray-100" : ""
+                                }`}
                             onMouseEnter={() => setActiveIndex(i)}
                             onClick={() => handleSelect(s)}
                         >
                             {s.placeName}
                         </li>
                     ))}
-
                 </ul>
             )}
 
-            <h2 className="font-semibold mb-2">선택된 장소</h2>
-            <ul className="list-none">
+            <h2 className="font-medium mb-3 text-gray-800 text-lg">선택된 장소</h2>
+            <ul className="space-y-3">
                 {selectedPlaces.map((place) => (
                     <li
                         key={place.placeId}
-                        className="bg-gray-200 px-3 pt-1 pb-2 mb-2 rounded flex items-baseline justify-between"
+                        className="flex justify-between items-center bg-gray-50 rounded-xl p-3 shadow-sm"
                     >
-                        {place.placeName}
+                        <span>{place.placeName}</span>
                         <button
                             onClick={() => {
                                 setSelectedPlaces((prev) =>
                                     prev.filter((p) => p.placeId !== place.placeId)
                                 );
                             }}
-                            className="text-red-600 hover:text-red-800 transition-colors duration-200 text-2xl font-bold leading-none"
+                            className="text-red-500 hover:text-red-700 text-xl font-semibold"
                             aria-label={`Delete ${place.placeName}`}
                         >
                             &times;
@@ -154,15 +159,13 @@ export default function TripPlanSelect() {
 
             <button
                 disabled={selectedPlaces.length === 0}
-                className={`mt-4 w-full py-2 rounded
-                    ${selectedPlaces.length === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                className={`mt-5 w-full py-3 rounded-xl text-base font-medium transition-colors
+            ${selectedPlaces.length === 0
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-indigo-600 hover:bg-indigo-700 text-white"
                     }`}
                 onClick={() => {
-                    navi("/trip/plan/schedule", {
-                        state: { selectedPlaces }
-                    });
+                    navi("/trip/plan/schedule", { state: { selectedPlaces } });
                 }}
             >
                 일정 정하기
