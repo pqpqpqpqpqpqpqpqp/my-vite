@@ -149,9 +149,10 @@ export default function TripPlanSearchModal({
                                         prev.filter((p) => p.placeId !== place.placeId)
                                     )
                                 }
-                                className="text-red-600 hover:text-red-800 font-bold"
+                                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200"
+                                aria-label={`Delete ${place.placeName}`}
                             >
-                                &times;
+                                삭제
                             </button>
                         </li>
                     ))}

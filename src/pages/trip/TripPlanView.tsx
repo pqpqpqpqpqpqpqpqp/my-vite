@@ -233,12 +233,14 @@ export default function TripPlanView() {
                     setSelectedDay={setSelectedDay}
                     setFocusedPlace={setFocusedPlace}
                 />
-                <TripPlanMap
-                    tripDetailDataGroupingDay={tripDetailDataGroupingDay}
-                    selectedDay={selectedDay}
-                    focusedPlace={focusedPlace}
-                    setFocusedPlace={setFocusedPlace}
-                />
+                <div className='flex-1 overflow-hidden relative'>
+                    <TripPlanMap
+                        tripDetailDataGroupingDay={tripDetailDataGroupingDay}
+                        selectedDay={selectedDay}
+                        focusedPlace={focusedPlace}
+                        setFocusedPlace={setFocusedPlace}
+                    />
+                </div>
             </main>
         </div>
     );

@@ -1,26 +1,25 @@
-import { Routes, Route } from "react-router-dom"
+import { useLocation } from "react-router-dom"
+import AppRouter from "./routers/AppRouter"
+import SignRouter from "./routers/SignRouter"
 import Header from "./components/Header"
-import Home from "./pages/Home"
-import TripPlanView from "./pages/trips/TripPlanView"
-import TripPlanSelect from "./pages/trips/TripPlanSelect"
-import TripPlanSchedule from "./pages/trips/TripPlanSchedule"
-import TripPlanDetail from "./pages/trips/TripPlanDetail"
 
-function App() {
+export default function App() {
+  const location = useLocation();
+
+  if (location.pathname.startsWith('/sign')) {
+    return (
+      <div className="w-screen h-screen flex flex-col ">
+        <SignRouter />
+      </div>
+    );
+  }
+
   return (
-    <div className="w-screen h-screen flex flex-col">
+    <div className="w-screen h-screen flex flex-col ">
       <Header />
-      <div className="flex-1 overflow-scroll">
-        <Routes>
-          <Route path='/' element={<Home />} />
-          <Route path='/trip/plan/view' element={<TripPlanView />} />
-          <Route path='/trip/plan/select' element={<TripPlanSelect />} />
-          <Route path='/trip/plan/schedule' element={<TripPlanSchedule />} />
-          <Route path='/trip/plan/detail' element={<TripPlanDetail />} />
-        </Routes>
+      <div className="pt-14">
+        <AppRouter />
       </div>
     </div>
   )
 }
-
-export default App
