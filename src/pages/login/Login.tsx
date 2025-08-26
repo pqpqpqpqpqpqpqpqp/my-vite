@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/useAuth';
+import { useAuth } from '../../contexts/auth/useAuth';
 import { toast } from 'sonner';
 
 export default function Login() {
@@ -37,11 +37,19 @@ export default function Login() {
                 credentials: 'include',
             });
 
-            const data = await response.json();
-
             if (response.ok) {
-                toast.success('로그인 성공');
-                login(data);
+                // ✅ 헤더에서 토큰과 만료시간 꺼내기
+                const authHeader = response.headers.get("Authorization");
+                const expiresAtHeader = response.headers.get("X-Expires-At");
+
+                if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                    throw new Error("Authorization 헤더가 올바르지 않습니다.");
+                }
+
+                const accessToken = authHeader.replace("Bearer ", "");
+                const expiresAt = expiresAtHeader ? Number(expiresAtHeader) : Date.now();
+
+                login({ accessToken, expiresAt });
                 navigate('/');
             } else {
                 toast.error('로그인 실패');

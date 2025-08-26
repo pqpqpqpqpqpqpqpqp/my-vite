@@ -15,9 +15,9 @@ export default function App() {
   }
 
   return (
-    <div className="w-screen h-screen flex flex-col ">
+    <div className="w-screen h-screen flex flex-col">
       <Header />
-      <div className="pt-14">
+      <div className="pt-14 flex h-full overflow-x-hidden">
         <AppRouter />
       </div>
     </div>

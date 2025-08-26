@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { HiMenu } from "react-icons/hi";
-import { useAuth } from "../contexts/useAuth";
+import { useAuth } from "../contexts/auth/useAuth";
 
 export default function Header() {
     const [bgColor, setBgColor] = useState("transparent");

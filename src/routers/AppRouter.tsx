@@ -8,7 +8,7 @@ import PrivateRoute from './PrivateRouter'
 
 export default function AppRouter() {
     return (
-        <div className="flex-1 overflow-scroll overflow-x-hidden">
+        <div className="flex-1">
             <Routes>
                 <Route path='/' element={<Home />} />
                 <Route path="/trip/plan/view" element={

@@ -104,7 +104,7 @@ export default function TripPlanSelect() {
     };
 
     return (
-        <div className="flex flex-col items-center p-4 min-h-screen bg-gray-100">
+        <div className="flex flex-col items-center p-4 min-h-screen bg-gray-100 overflow-scroll">
             <div className="w-full max-w-md">
 
                 <input

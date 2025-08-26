@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useAuth } from "../contexts/useAuth";
+import { useAuth } from "../contexts/auth/useAuth";
 import type { PrivateRouteProps } from "../types/login";
 
 function PrivateRoute({ children }: PrivateRouteProps) {
