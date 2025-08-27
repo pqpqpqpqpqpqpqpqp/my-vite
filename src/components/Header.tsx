@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { HiMenu } from "react-icons/hi";
-import { useAuth } from "../contexts/auth/useAuth";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Header() {
     const [bgColor, setBgColor] = useState("transparent");
     const [menuOpen, setMenuOpen] = useState(false);
-    const { isLoggedIn, logout } = useAuth();
+    const { isLoggedIn, logout, user } = useAuth();
     const menuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -48,41 +48,57 @@ export default function Header() {
                 <Link to="/">My Application</Link>
             </div>
 
-            <div className="relative" ref={menuRef}>
-                <HiMenu
-                    className="text-2xl cursor-pointer"
-                    onClick={() => setMenuOpen(!menuOpen)}
-                />
-
-                {menuOpen && (
-                    <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded border border-gray-200 flex flex-col">
-                        {isLoggedIn ? (
-                            <button
-                                className="px-4 py-2 text-left hover:bg-gray-100 transition"
-                                onClick={logout}
-                            >
-                                로그아웃
-                            </button>
-                        ) : (
-                            <>
-                                <Link
-                                    to="/sign/login"
-                                    className="px-4 py-2 hover:bg-gray-100 transition"
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    로그인
-                                </Link>
-                                <Link
-                                    to="/sign/signup"
-                                    className="px-4 py-2 hover:bg-gray-100 transition"
-                                    onClick={() => setMenuOpen(false)}
-                                >
-                                    회원가입
-                                </Link>
-                            </>
-                        )}
-                    </div>
+            <div className="flex items-center space-x-4">
+                {isLoggedIn && user && (
+                    <span className="text-sm font-medium">
+                        환영합니다, {user.nickname || user.name}님!
+                    </span>
                 )}
+                <div className="relative" ref={menuRef}>
+                    <HiMenu
+                        className="text-2xl cursor-pointer"
+                        onClick={() => setMenuOpen(!menuOpen)}
+                    />
+
+                    {menuOpen && (
+                        <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded border border-gray-200 flex flex-col">
+                            {isLoggedIn ? (
+                                <>
+                                    <Link
+                                        to="/user/profile"
+                                        className="px-4 py-2 hover:bg-gray-100 transition"
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        프로필
+                                    </Link>
+                                    <button
+                                        className="px-4 py-2 text-left hover:bg-gray-100 transition"
+                                        onClick={logout}
+                                    >
+                                        로그아웃
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        to="/sign/login"
+                                        className="px-4 py-2 hover:bg-gray-100 transition"
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        로그인
+                                    </Link>
+                                    <Link
+                                        to="/sign/signup"
+                                        className="px-4 py-2 hover:bg-gray-100 transition"
+                                        onClick={() => setMenuOpen(false)}
+                                    >
+                                        회원가입
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
         </header>
     );

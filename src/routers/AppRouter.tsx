@@ -4,6 +4,7 @@ import TripPlanView from "../pages/trip/TripPlanView"
 import TripPlanSelect from "../pages/trip/TripPlanSelect"
 import TripPlanSchedule from "../pages/trip/TripPlanSchedule"
 import TripPlanDetail from "../pages/trip/TripPlanDetail"
+import Profile from '../pages/user/Profile'
 import PrivateRoute from './PrivateRouter'
 
 export default function AppRouter() {
@@ -31,6 +32,12 @@ export default function AppRouter() {
                         <TripPlanDetail />
                     </PrivateRoute>
                 } />
+                <Route path="/user/profile" element={
+                    <PrivateRoute>
+                        <Profile />
+                    </PrivateRoute>
+                } />
+                <Route path="*" element={<div>Not Found</div>} />
             </Routes>
         </div>
     )

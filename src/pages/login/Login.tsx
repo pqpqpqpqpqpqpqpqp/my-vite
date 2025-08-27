@@ -1,106 +1,117 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/auth/useAuth';
+import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'sonner';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Login() {
     const [userEmail, setUserEmail] = useState('');
     const [userPw, setUserPw] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
-    const isValidEmail = (value: string) =>
-        /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
-    const isValidPw = (value: string) =>
-        /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[\W_]).{8,20}$/.test(value);
-
-    const isFormValid =
-        (isValidEmail(userEmail)) &&
-        isValidPw(userPw);
-
-    const inputClass = (valid: boolean | null) =>
-        `p-3 border rounded-lg focus:outline-none focus:ring-2 ${valid === null
-            ? 'border-gray-300 focus:ring-blue-400'
-            : valid
-                ? 'border-green-500 focus:ring-green-400'
-                : 'border-red-500 focus:ring-red-400'
-        }`;
+    const isValidEmail = (value: string) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
+    const isValidPw = (value: string) => /^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[\W_]).{8,20}$/.test(value);
+    const isFormValid = isValidEmail(userEmail) && isValidPw(userPw);
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (!isFormValid || isLoading) return;
 
+        setIsLoading(true);
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: userEmail, pw: userPw }),
-                credentials: 'include',
-            });
-
-            if (response.ok) {
-                // ✅ 헤더에서 토큰과 만료시간 꺼내기
-                const authHeader = response.headers.get("Authorization");
-                const expiresAtHeader = response.headers.get("X-Expires-At");
-
-                if (!authHeader || !authHeader.startsWith("Bearer ")) {
-                    throw new Error("Authorization 헤더가 올바르지 않습니다.");
-                }
-
-                const accessToken = authHeader.replace("Bearer ", "");
-                const expiresAt = expiresAtHeader ? Number(expiresAtHeader) : Date.now();
-
-                login({ accessToken, expiresAt });
-                navigate('/');
-            } else {
-                toast.error('로그인 실패');
-            }
+            await login({ email: userEmail, pw: userPw });
+            navigate('/');
         } catch (error) {
-            if (error instanceof Error) toast.error(`로그인 실패: ${error.message}`);
-            else toast.error("로그인 실패: 알 수 없는 오류");
+            if (error instanceof Error) toast.error(error.message);
+            else toast.error("로그인 중 오류가 발생했습니다.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-gray-50 rounded-xl shadow-md">
-            <h2 className="text-2xl font-semibold mb-6 text-center">로그인</h2>
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                <input
-                    type="text"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                    placeholder="이메일 또는 전화번호"
-                    required
-                    className={inputClass(
-                        userEmail === ''
-                            ? null
-                            : isValidEmail(userEmail)
-                    )}
-                />
-                <input
-                    type="password"
-                    value={userPw}
-                    onChange={(e) => setUserPw(e.target.value)}
-                    placeholder="비밀번호 (영문, 숫자, 특수문자 포함 8~20자)"
-                    required
-                    className={inputClass(userPw === '' ? null : isValidPw(userPw))}
-                />
-                <button
-                    type="submit"
-                    disabled={!isFormValid}
-                    className={`p-3 rounded-lg transition-colors ${isFormValid
-                        ? 'bg-blue-400 text-white hover:bg-blue-500'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
-                >
-                    로그인
-                </button>
-            </form>
-            <p className="mt-4 text-sm text-gray-600 text-center">
-                아직 회원이 아니신가요?{' '}
-                <Link to="/sign/signup" className="text-blue-600 hover:underline">
-                    회원가입
-                </Link>
-            </p>
+        <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-lg">
+            <div className="w-full max-w-md space-y-8">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-center text-gray-900">
+                        My Trip App
+                    </h1>
+                    <p className="mt-2 text-sm text-center text-gray-600">
+                        로그인하고 여행 계획을 시작하세요
+                    </p>
+                </div>
+                <form onSubmit={handleLogin} className="mt-8 space-y-6">
+                    <div className="space-y-4 rounded-md shadow-sm">
+                        <div>
+                            <label htmlFor="userEmail" className="sr-only">이메일 주소</label>
+                            <input
+                                id="userEmail"
+                                type="email"
+                                autoComplete="email"
+                                required
+                                value={userEmail}
+                                onChange={(e) => setUserEmail(e.target.value)}
+                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="이메일 주소"
+                            />
+                        </div>
+                        <div className="relative">
+                            <label htmlFor="userPw" className="sr-only">비밀번호</label>
+                            <input
+                                id="userPw"
+                                type={showPassword ? 'text' : 'password'}
+                                autoComplete="current-password"
+                                required
+                                value={userPw}
+                                onChange={(e) => setUserPw(e.target.value)}
+                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                placeholder="비밀번호"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-auto text-gray-400 hover:text-gray-600"
+                            >
+                                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <button
+                            type="submit"
+                            disabled={!isFormValid || isLoading}
+                            className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed"
+                        >
+                            {isLoading ? '로그인 중...' : '로그인'}
+                        </button>
+                    </div>
+                </form>
+
+                {/* 소셜 로그인 버튼 영역 */}
+                <div className="relative mt-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 text-gray-500 bg-white">또는</span>
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-6">
+                    {/* 실제로는 onClick 핸들러에 각 소셜 로그인 로직을 연결해야 합니다. */}
+                    <button className="inline-flex justify-center w-full py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50">Google</button>
+                    <button className="inline-flex justify-center w-full py-2 text-sm font-medium text-gray-700 bg-yellow-300 border border-transparent rounded-md shadow-sm hover:bg-yellow-400">Kakao</button>
+                </div>
+
+                <p className="mt-6 text-sm text-center">
+                    <Link to="/sign/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+                        계정이 없으신가요? 회원가입
+                    </Link>
+                </p>
+            </div>
         </div>
     );
 }

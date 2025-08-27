@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/auth/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 import Login from '../pages/login/Login';
 import Signup from '../pages/login/Signup';
 import LoginRequired from '../pages/login/LoginRequired';
@@ -12,7 +12,10 @@ export default function SignRouter() {
     }
 
     return (
-        <div className="sign_context">
+        <div
+            className="flex items-center justify-center min-h-screen bg-cover bg-center"
+            style={{ backgroundImage: "url('/blueblue.jpg')" }}
+        >
             <Routes>
                 <Route path="/sign/login" element={<Login />} />
                 <Route path="/sign/signup" element={<Signup />} />

@@ -1,24 +1,44 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { FaLock } from 'react-icons/fa'; // 아이콘 추가
 
 export default function LoginRequired() {
+    const location = useLocation();
+    const from = location.state?.from?.pathname || '/';
+
     return (
-        <div className="flex justify-center items-center h-screen bg-gray-100">
-            <div className="text-center bg-white p-10 rounded-xl shadow-md font-sans">
-                <h2 className="mb-5 text-gray-800 text-2xl font-semibold">
-                    로그인이 필요한 서비스입니다
+        <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center bg-gray-50">
+            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg">
+                <div className="flex justify-center">
+                    <div className="flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full">
+                        <FaLock className="w-8 h-8 text-indigo-600" />
+                    </div>
+                </div>
+                
+                <h2 className="text-3xl font-bold text-gray-900">
+                    로그인이 필요합니다
                 </h2>
-                <p className="mb-3">
-                    로그인 하러가기:{' '}
-                    <Link to="/sign/login" className="text-blue-600 font-bold hover:underline">
-                        로그인
-                    </Link>
+                
+                <p className="text-gray-600">
+                    이 페이지에 접근하려면 먼저 로그인해야 합니다.
+                    <br />
+                    계속하려면 아래 버튼을 클릭하여 로그인해주세요.
                 </p>
-                <p>
-                    홈으로 돌아가기:{' '}
-                    <Link to="/" className="text-blue-600 hover:underline">
-                        홈
+
+                <div className="flex flex-col w-full gap-4 pt-4">
+                    <Link
+                        to="/sign/login"
+                        state={{ from: from }}
+                        className="w-full px-4 py-3 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    >
+                        로그인 페이지로 이동
                     </Link>
-                </p>
+                    <Link
+                        to="/"
+                        className="w-full px-4 py-3 text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                    >
+                        홈으로 돌아가기
+                    </Link>
+                </div>
             </div>
         </div>
     );

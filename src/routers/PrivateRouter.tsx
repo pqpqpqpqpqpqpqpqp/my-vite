@@ -1,23 +1,14 @@
-import { useEffect } from "react";
-import { Navigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useAuth } from "../contexts/auth/useAuth";
-import type { PrivateRouteProps } from "../types/login";
+import type { PropsWithChildren } from "react";
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
-function PrivateRoute({ children }: PrivateRouteProps) {
+export default function PrivateRouter({ children }: PropsWithChildren) {
     const { isLoggedIn } = useAuth();
-
-    useEffect(() => {
-        if (!isLoggedIn) {
-            toast.warning('로그인이 필요한 기능입니다.');
-        }
-    }, [isLoggedIn]);
+    const location = useLocation();
 
     if (!isLoggedIn) {
-        return <Navigate to="/sign/required" replace />;
+        return <Navigate to="/sign/required" state={{ from: location }} replace />;
     }
 
     return children;
 }
-
-export default PrivateRoute;
