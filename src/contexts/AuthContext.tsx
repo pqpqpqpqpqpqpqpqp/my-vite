@@ -10,7 +10,7 @@ interface User {
     gender: string;
     name: string;
     nickname: string | null;
-    profileImg: string | "/default_profile.jpg";
+    profileImg: string | "/default_profile.png";
 }
 
 interface AuthContextType {

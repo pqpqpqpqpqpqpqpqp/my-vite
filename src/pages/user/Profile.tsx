@@ -21,12 +21,12 @@ export default function Profile() {
                 {/* 프로필 이미지 */}
                 <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-indigo-500">
                     <img
-                        src={user.profileImg || '/default_profile.jpg'}
+                        src={user.profileImg || '/default_profile.png'}
                         alt={`${user.nickname || user.name}의 프로필 이미지`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                             // 이미지를 불러오지 못했을 경우 기본 이미지로 대체
-                            e.currentTarget.src = '/default_profile.jpg';
+                            e.currentTarget.src = '/default_profile.png';
                         }}
                     />
                 </div>
