@@ -27,7 +27,7 @@ export default function AppRouter() {
                         <TripPlanSchedule />
                     </PrivateRoute>
                 } />
-                <Route path="/trip/plan/detail" element={
+                <Route path="/trip/plan/detail/:tripId" element={
                     <PrivateRoute>
                         <TripPlanDetail />
                     </PrivateRoute>

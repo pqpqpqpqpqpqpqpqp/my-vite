@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { placeApiLoader } from "../../api/PlaceApiLoader";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import type { TripPlace } from "../../types/trip";
 
 export default function TripPlanSelect() {
@@ -8,51 +8,48 @@ export default function TripPlanSelect() {
     const [suggestions, setSuggestions] = useState<TripPlace[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
     const [selectedPlaces, setSelectedPlaces] = useState<TripPlace[]>([]);
-
     const navi = useNavigate();
+    const placesLib = useMapsLibrary('places');
+
+    const autocompleteService = useMemo(
+        () => placesLib ? new placesLib.AutocompleteService() : null,
+        [placesLib]
+    );
 
     useEffect(() => {
-        if (!searchText) {
+        if (!autocompleteService || !searchText) {
             setSuggestions([]);
             return;
         }
 
         const timer = setTimeout(() => {
-            async function handleSuggestion() {
-                const { AutocompleteSuggestion } = await placeApiLoader.importLibrary("places");
+            const request = {
+                input: searchText,
+                language: "ko",
+            };
 
-                const AutoComReq = {
-                    input: searchText,
-                    language: "ko",
-                };
-
-                try {
-                    const res = await AutocompleteSuggestion.fetchAutocompleteSuggestions(AutoComReq);
-
-                    const simplifiedSuggestions = (res.suggestions || []).map((s) => ({
-                        placeId: s.placePrediction?.placeId || "",
-                        name: s.placePrediction?.text?.text || "",
-                        types: s.placePrediction?.types || [],
+            autocompleteService.getPlacePredictions(request, (predictions, status) => {
+                if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+                    const simplifiedSuggestions = predictions.map((p) => ({
+                        placeId: p.place_id,
+                        placeName: p.description,
+                        types: p.types || [],
                     }));
-
                     setSuggestions(simplifiedSuggestions);
-                } catch (error) {
-                    console.error(error);
+                } else {
                     setSuggestions([]);
                 }
-            }
-
-            handleSuggestion();
+            });
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchText]);
+    }, [searchText, autocompleteService]);
 
     const handleSelect = async (suggestion: TripPlace) => {
         if (!selectedPlaces.some(p => p.placeId === suggestion.placeId)) {
             setSelectedPlaces(prev => [...prev, suggestion]);
         }
-        
+
         setSearchText("");
         setSuggestions([]);
         setActiveIndex(-1);
@@ -90,7 +87,7 @@ export default function TripPlanSelect() {
                             onMouseEnter={() => setActiveIndex(i)}
                             onClick={() => handleSelect(s)}
                         >
-                            {s.name}
+                            {s.placeName}
                         </li>
                     ))}
                 </ul>
@@ -103,11 +100,11 @@ export default function TripPlanSelect() {
                         key={place.placeId}
                         className="bg-gray-200 px-3 pt-1 pb-2 mb-2 rounded flex items-baseline justify-between"
                     >
-                        {place.name}
+                        {place.placeName}
                         <button
                             onClick={() => setSelectedPlaces(prev => prev.filter(p => p.placeId !== place.placeId))}
                             className="text-red-600 hover:text-red-800 transition-colors duration-200 text-2xl font-bold leading-none"
-                            aria-label={`Delete ${place.name}`}
+                            aria-label={`Delete ${place.placeName}`}
                         >
                             &times;
                         </button>
