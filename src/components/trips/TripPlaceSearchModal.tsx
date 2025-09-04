@@ -2,128 +2,146 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import { toast } from "sonner";
-import type { PlaceSuggestion, PlaceDTO, TripPlace } from "../../types/trip";
+import type { TripDTO, TripPlaceDTO, PlaceSuggestion } from "../../types/trip";
 import { FaSearch, FaMapMarkerAlt, FaTimes, FaPlusCircle, FaTimesCircle, FaRegMap } from "react-icons/fa";
 import { PLAN_URL } from "../../config";
 
-
 interface TripPlaceSearchModalProps {
-    mainPlaces: PlaceDTO[];
+    trip: TripDTO | null;
+    setTrip: (trip: TripDTO) => void;
     selectedDay: number;
-    tripDetailDataGroupingDay: Map<number, TripPlace[]>;
-    setTripDetailDataGroupingDay: (dayData: Map<number, TripPlace[]>) => void;
     onClose: () => void;
+}
+
+interface TripPlaceAddRequest {
+    tripDayId: string;
+    placeId: string;
+    placeName: string;
 }
 
 export default function TripPlaceSearchModal({
     onClose,
     selectedDay,
-    mainPlaces,
-    tripDetailDataGroupingDay,
-    setTripDetailDataGroupingDay,
+    trip,
+    setTrip,
 }: TripPlaceSearchModalProps) {
     const { tripId } = useParams<{ tripId: string }>();
     const [searchText, setSearchText] = useState("");
     const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [newSelectedPlaces, setNewSelectedPlaces] = useState<PlaceDTO[]>([]);
+
+    const [newSelectedPlaces, setNewSelectedPlaces] = useState<PlaceSuggestion[]>([]);
     const placesLib = useMapsLibrary("places");
 
+    const mainPlaceIds = trip?.mainPlaceIds ?? [];
+
     useEffect(() => {
-        if (!searchText || !placesLib || !mainPlaces || mainPlaces.length === 0) {
+        if (!searchText || !placesLib || mainPlaceIds.length === 0) {
             setSuggestions([]);
             return;
         }
 
         const timer = setTimeout(async () => {
             try {
-                // 각 장소별로 검색 작업을 생성
-                const searchTasks = newSelectedPlaces.map(async (p) => {
+                const searchTasks = mainPlaceIds.map(async (placeId) => {
                     try {
-                        const place = await new placesLib.Place({ id: p.placeId }).fetchFields({ fields: ['viewport'] });
+                        const place = await new placesLib.Place({ id: placeId }).fetchFields({ fields: ['viewport'] });
                         const viewport = place.place?.viewport;
-
-                        if (!viewport) {
-                            return [];
-                        }
+                        if (!viewport) return [];
 
                         const request = { input: searchText, language: 'ko', locationRestriction: viewport };
                         const res = await placesLib.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
-                        const placeSuggestions: PlaceSuggestion[] = res.suggestions.map(s => ({
+
+                        const forbiddenTypes = ["country", "administrative_area_level_1", "locality"];
+
+                        const filtered = (res.suggestions || []).filter(s =>
+                            !(s.placePrediction?.types || []).some(t => forbiddenTypes.includes(t))
+                        );
+
+                        return filtered.map(s => ({
                             placeId: s.placePrediction?.placeId || "",
                             placeName: s.placePrediction?.mainText?.text || "",
+                            placeText: s.placePrediction?.secondaryText?.text || "",
                         }));
-                        return placeSuggestions;
-                    } catch (innerError) { /* ... */ return []; }
+
+                    } catch (innerError) { return []; }
                 });
-                // ... (Promise.all 로직은 이전과 동일)
-            } catch (error) { /* ... */ }
+
+                const results = await Promise.all(searchTasks);
+                const merged = results.flat();
+                const unique = Array.from(new Map(merged.map(s => [s.placeId, s])).values());
+                setSuggestions(unique);
+
+            } catch (error) { console.error("Autocomplete search error:", error); }
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [searchText, mainPlaces, placesLib]);
+    }, [searchText, mainPlaceIds, placesLib]);
 
-    // [수정] 매개변수 타입을 PlaceSuggestion으로 변경
-    const handleSelect = async (suggestion: PlaceSuggestion) => {
-        if (!placesLib || !suggestion.placeId) return;
-        if (newSelectedPlaces.some(p => p.placeId === suggestion.placeId)) { /* ... */ return; }
+    const handleSelect = (suggestion: PlaceSuggestion) => {
+        if (!suggestion.placeId) return;
+        if (newSelectedPlaces.some(p => p.placeId === suggestion.placeId)) {
+            toast.info("이미 추가할 목록에 있는 장소입니다.");
+            return;
+        }
 
-        try {
-            const placeDetails = await new placesLib.Place({ id: suggestion.placeId }).fetchFields({ fields: ['formattedAddress', 'primaryType', 'location'] });
-            if (placeDetails.place) {
-                // [수정] 새로 생성하는 객체가 PlaceDTO 타입임을 명확히 함
-                const newPlace: PlaceDTO = {
-                    placeId: suggestion.placeId,
-                    placeName: suggestion.placeName,
-                    address: placeDetails.place.formattedAddress || "",
-                    placeType: placeDetails.place.primaryType || "locality",
-                    placeLat: placeDetails.place.location?.lat() || 0,
-                    placeLng: placeDetails.place.location?.lng() || 0,
-                };
-                setNewSelectedPlaces(prev => [...prev, newPlace]);
-            }
-        } catch (err) { /* ... */ }
+        setNewSelectedPlaces(prev => [...prev, suggestion]);
 
         setSearchText("");
         setSuggestions([]);
         setActiveIndex(-1);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => { /* ... 이전과 동일 ... */ };
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.nativeEvent.isComposing) return;
+        if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setActiveIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev));
+        } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setActiveIndex(prev => (prev > 0 ? prev - 1 : 0));
+        } else if (e.key === "Enter" && activeIndex >= 0) {
+            e.preventDefault();
+            handleSelect(suggestions[activeIndex]);
+        }
+    };
 
-    /**
-     * [수정] 최종 장소 추가 로직 (API 연동)
-     */
     const handleAddPlaces = async () => {
-        if (newSelectedPlaces.length === 0 || !tripId) return;
+        if (newSelectedPlaces.length === 0 || !tripId || !trip) return;
 
-        // 백엔드 API가 PlaceDTO[] 형태를 받는다고 가정
-        const placesToAdd = newSelectedPlaces;
+        const placesToAdd: TripPlaceAddRequest[] = newSelectedPlaces.map(place => ({
+            tripDayId: trip.tripDays[selectedDay - 1].tripDayId,
+            placeId: place.placeId,
+            placeName: place.placeName,
+        }));
 
         try {
-            // [신규] 백엔드에 장소 추가 API 호출
-            const response = await fetch(`${PLAN_URL}/trip/place/add/${tripId}/${selectedDay}`, {
+
+            const response = await fetch(`${PLAN_URL}/trip/place/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(placesToAdd),
                 credentials: 'include'
             });
 
-            if (!response.ok) {
-                throw new Error("장소 추가에 실패했습니다.");
-            }
+            if (!response.ok) throw new Error("장소 추가에 실패했습니다.");
 
-            // [신규] API 응답으로 받은, tripPlaceId가 포함된 완전한 장소 목록
-            const savedTripDetails: TripPlace[] = await response.json();
+            const savedTripPlaces: TripPlaceDTO[] = await response.json();
 
-            // [신규] 이 결과값으로 부모의 상태를 업데이트
-            const existingPlaces = tripDetailDataGroupingDay.get(selectedDay) || [];
-            const newMap = new Map(tripDetailDataGroupingDay);
-            newMap.set(selectedDay, [...existingPlaces, ...savedTripDetails]);
-            setTripDetailDataGroupingDay(newMap);
+            const updatedTripDays = trip.tripDays.map(day => {
+                if (day.dayOrder === selectedDay) {
+                    return {
+                        ...day,
+                        tripPlaces: [...day.tripPlaces, ...savedTripPlaces]
+                    };
+                }
+                return day;
+            });
 
-            toast.success(`${savedTripDetails.length}개의 장소가 추가되었습니다.`);
-            onClose(); // 성공 시 모달 닫기
+            setTrip({ ...trip, tripDays: updatedTripDays });
+
+            toast.success(`${savedTripPlaces.length}개의 장소가 추가되었습니다.`);
+            onClose();
 
         } catch (error) {
             console.error("장소 추가 실패:", error);
@@ -165,12 +183,17 @@ export default function TripPlaceSearchModal({
                         <ul className="absolute z-20 w-full mt-2 rounded-xl bg-white shadow-lg border max-h-60 overflow-y-auto">
                             {suggestions.map((s, i) => (
                                 <li key={s.placeId}
-                                    className={`flex items-center gap-3 p-3 cursor-pointer transition-colors ${i === activeIndex ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                                    className={`flex items-start gap-3 p-3 cursor-pointer transition-colors ${i === activeIndex ? "bg-blue-100" : "hover:bg-gray-50"}`}
                                     onMouseEnter={() => setActiveIndex(i)}
                                     onClick={() => handleSelect(s)}
                                 >
-                                    <FaMapMarkerAlt className="text-gray-400" />
-                                    <span className="text-gray-700">{s.placeName}</span>
+                                    <FaMapMarkerAlt className="text-gray-400 mt-1" /> {/* 아이콘 정렬을 위해 약간의 상단 마진을 추가할 수 있습니다. */}
+                                    <div className="flex flex-col"> {/* 텍스트들을 감싸는 div 추가 */}
+                                        <span className="font-medium text-gray-800">{s.placeName}</span>
+                                        {s.placeText && (
+                                            <span className="text-sm text-gray-500">{s.placeText}</span>
+                                        )}
+                                    </div>
                                 </li>
                             ))}
                         </ul>

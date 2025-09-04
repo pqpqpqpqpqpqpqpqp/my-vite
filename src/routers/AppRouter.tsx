@@ -4,6 +4,7 @@ import TripPlanView from "../pages/trip/TripPlanView"
 import TripPlanSelect from "../pages/trip/TripPlanSelect"
 import TripPlanSchedule from "../pages/trip/TripPlanSchedule"
 import TripPlanDetail from "../pages/trip/TripPlanDetail"
+import TripPlanList from '../pages/trip/TripPlanList'
 import Profile from '../pages/user/Profile'
 import PrivateRoute from './PrivateRouter'
 
@@ -12,7 +13,7 @@ export default function AppRouter() {
         <div className="flex-1">
             <Routes>
                 <Route path='/' element={<Home />} />
-                <Route path="/trip/plan/view" element={
+                <Route path="/trip/plan/view/:tripId" element={
                     <PrivateRoute>
                         <TripPlanView />
                     </PrivateRoute>
@@ -30,6 +31,11 @@ export default function AppRouter() {
                 <Route path="/trip/plan/detail/:tripId" element={
                     <PrivateRoute>
                         <TripPlanDetail />
+                    </PrivateRoute>
+                } />
+                <Route path="/trip/plan/list" element={
+                    <PrivateRoute>
+                        <TripPlanList />
                     </PrivateRoute>
                 } />
                 <Route path="/user/profile" element={

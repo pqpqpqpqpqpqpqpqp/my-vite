@@ -1,189 +1,61 @@
 import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import TripPlanMap from '../../components/trips/TripPlanMap';
-import type { TripDetailData, TripPlanSidebarProps } from '../../types/trip';
+import type { TripDTO, TripPlaceDTO } from '../../types/trip';
+import { PLAN_URL } from '../../config';
+import { ClipLoader } from 'react-spinners';
 
-const tripData = {
-    title: '서울 여행',
-    startDate: '2023-10-01',
-    endDate: '2023-10-05',
+interface TripPlanSidebarProps {
+    trip: TripDTO | null;
+    selectedDay: number;
+    setSelectedDay: (day: number) => void;
+    setFocusedPlace: (place: TripPlaceDTO) => void;
 };
 
-const tripDetailData: TripDetailData[] = [
-    {
-        placeId: "1",
-        dayOrder: 1,
-        placeName: "경복궁",
-        placeLat: 37.5779,
-        placeLng: 126.9769,
-        orderInDay: 1,
-        placeMemo: "경복궁은 조선 왕조의 주요 궁궐입니다.",
-    },
-    {
-        placeId: "2",
-        dayOrder: 1,
-        placeName: "북촌 한옥마을",
-        placeLat: 37.5826,
-        placeLng: 126.9839,
-        orderInDay: 2,
-        placeMemo: "전통 한옥이 잘 보존된 지역입니다.",
-    },
-    {
-        placeId: "3",
-        dayOrder: 1,
-        placeName: "인사동",
-        placeLat: 37.5749,
-        placeLng: 126.9882,
-        orderInDay: 3,
-        placeMemo: "한국 전통 문화와 예술을 체험할 수 있는 곳입니다.",
-    },
-    {
-        placeId: "4",
-        dayOrder: 1,
-        placeName: "남산타워",
-        placeLat: 37.5512,
-        placeLng: 126.9882,
-        orderInDay: 4,
-        placeMemo: "서울의 랜드마크로, 전망이 아름답습니다.",
-    },
-    {
-        placeId: "5",
-        dayOrder: 1,
-        placeName: "명동",
-        placeLat: 37.5636,
-        placeLng: 126.9850,
-        orderInDay: 5,
-        placeMemo: "쇼핑과 먹거리가 풍부한 지역입니다.",
-    },
-    {
-        placeId: "6",
-        dayOrder: 2,
-        placeName: "동대문 디자인 플라자",
-        placeLat: 37.5663,
-        placeLng: 127.0090,
-        orderInDay: 1,
-        placeMemo: "현대적인 건축물과 디자인을 감상할 수 있습니다.",
-    },
-    {
-        placeId: "7",
-        dayOrder: 2,
-        placeName: "청계천",
-        placeLat: 37.5700,
-        placeLng: 126.9779,
-        orderInDay: 2,
-        placeMemo: "서울 도심을 가로지르는 아름다운 하천입니다.",
-    },
-    {
-        placeId: "8",
-        dayOrder: 2,
-        placeName: "광화문",
-        placeLat: 37.5759,
-        placeLng: 126.9769,
-        orderInDay: 3,
-        placeMemo: "조선 시대의 정문으로, 역사적인 의미가 깊습니다.",
-    },
-    {
-        placeId: "9",
-        dayOrder: 2,
-        placeName: "이태원",
-        placeLat: 37.5349,
-        placeLng: 126.9940,
-        orderInDay: 4,
-        placeMemo: "다양한 문화가 공존하는 국제적인 지역입니다.",
-    },
-    {
-        placeId: "10",
-        dayOrder: 2,
-        placeName: "홍대",
-        placeLat: 37.5570,
-        placeLng: 126.9259,
-        orderInDay: 5,
-        placeMemo: "젊은이들의 문화와 예술이 살아있는 곳입니다.",
-    },
-    {
-        placeId: "11",
-        dayOrder: 3,
-        placeName: "롯데월드",
-        placeLat: 37.5112,
-        placeLng: 127.0983,
-        orderInDay: 1,
-        placeMemo: "서울의 대표적인 테마파크입니다.",
-    },
-    {
-        placeId: "12",
-        dayOrder: 3,
-        placeName: "잠실 한강공원",
-        placeLat: 37.5172,
-        placeLng: 127.1010,
-        orderInDay: 2,
-        placeMemo: "한강을 따라 산책과 운동을 즐길 수 있는 곳입니다.",
-    },
-    {
-        placeId: "13",
-        dayOrder: 3,
-        placeName: "서울숲",
-        placeLat: 37.5449,
-        placeLng: 127.0420,
-        orderInDay: 3,
-        placeMemo: "도심 속에서 자연을 느낄 수 있는 공원입니다.",
-    },
-    {
-        placeId: "14",
-        dayOrder: 3,
-        placeName: "성수동 카페거리",
-        placeLat: 37.5445,
-        placeLng: 127.0470,
-        orderInDay: 4,
-        placeMemo: "트렌디한 카페와 맛집이 많은 지역입니다.",
-    },
-    {
-        placeId: "15",
-        dayOrder: 3,
-        placeName: "가로수길",
-        placeLat: 37.5210,
-        placeLng: 126.9180,
-        orderInDay: 5,
-        placeMemo: "패션과 예술이 어우러진 거리입니다.",
-    }
-];
-
-const tripDetailDataGroupingDay: Map<number, TripDetailData[]> = new Map();
-
-tripDetailData.forEach(item => {
-    const key = item.dayOrder;
-    if (!tripDetailDataGroupingDay.has(key)) {
-        tripDetailDataGroupingDay.set(key, []);
-    }
-    tripDetailDataGroupingDay.get(key)!.push(item);
-});
-
 function TripPlanSidebar({
-    tripData,
-    tripDetailDataGroupingDay,
+    trip,
     selectedDay,
     setSelectedDay,
-    setFocusedPlace }: TripPlanSidebarProps) {
+    setFocusedPlace
+}: TripPlanSidebarProps) {
+    if (!trip) {
+        return (
+            <aside className="w-80 bg-white p-6 h-full overflow-y-auto shadow-md">
+                <div className="flex justify-center items-center h-full">
+                    <ClipLoader
+                        color={"#3B82F6"}
+                        loading={true}
+                        size={40}
+                        aria-label="Loading Spinner"
+                    />
+                </div>
+            </aside>
+        );
+    }
+    const { tripTitle, startDate, endDate, tripDays } = trip;
+
     return (
-        <aside className="min-w-80 bg-gray-100 p-6 h-full">
-            <div className="mb-6 border-b">
-                <h1 className="text-2xl font-bold">{tripData.title}</h1>
+        <aside className="w-80 bg-white p-6 h-full overflow-y-auto shadow-md">
+            <div className="mb-6 pb-4 border-b">
+                <h1 className="text-2xl font-bold truncate">{tripTitle ?? '나의 여행'}</h1>
                 <p className="text-gray-500 text-sm">
-                    {tripData.startDate} ~ {tripData.endDate}
+                    {startDate ?? ''} ~ {endDate ?? ''}
                 </p>
             </div>
 
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                {[...tripDetailDataGroupingDay.keys()].map((day) => {
-                    const isSelected = selectedDay === day;
+            <div className="bg-white rounded-xl overflow-hidden">
+                {tripDays.sort((a, b) => a.dayOrder - b.dayOrder).map((dayData) => {
+                    const isSelected = selectedDay === dayData.dayOrder;
                     return (
-                        <div key={day} className="transition-all border-b last:border-none">
+                        <div key={dayData.tripDayId} className="transition-all border-b last:border-none">
                             <div
-                                onClick={() => setSelectedDay(day)}
-                                className={`px-6 py-4 cursor-pointer flex items-center justify-between ${isSelected
+                                onClick={() => setSelectedDay(dayData.dayOrder)}
+                                className={`px-4 py-3 cursor-pointer flex items-center justify-between ${isSelected
                                     ? 'bg-blue-100 text-blue-800 font-semibold'
                                     : 'hover:bg-gray-50'
                                     }`}
                             >
-                                <span>{day}일차</span>
+                                <span>{dayData.dayOrder}일차</span>
                                 {isSelected && (
                                     <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
@@ -192,11 +64,11 @@ function TripPlanSidebar({
                             </div>
 
                             {isSelected && (
-                                <div className="bg-gray-50">
-                                    {tripDetailDataGroupingDay.get(day)?.map((place) => (
+                                <div className="bg-gray-50 p-2 space-y-2">
+                                    {dayData.tripPlaces.map((place) => (
                                         <div
-                                            key={place.orderInDay}
-                                            className="flex justify-between items-center p-4 bg-white hover:bg-gray-100 transition rounded-md shadow-sm m-2"
+                                            key={place.tripPlaceId}
+                                            className="p-3 bg-white hover:bg-blue-50 transition rounded-md shadow-sm cursor-pointer"
                                             onClick={() => setFocusedPlace(place)}
                                         >
                                             <div className="font-medium text-gray-800">{place.placeName}</div>
@@ -213,29 +85,77 @@ function TripPlanSidebar({
 };
 
 export default function TripPlanView() {
+    const { tripId } = useParams<{ tripId: string }>();
+    const navi = useNavigate();
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [trip, setTrip] = useState<TripDTO | null>(null);
+
     const [selectedDay, setSelectedDay] = useState(1);
-    const [focusedPlace, setFocusedPlace] = useState<TripDetailData>(tripDetailData[0]);
+    const [focusedPlace, setFocusedPlace] = useState<TripPlaceDTO | undefined>(undefined);
 
     useEffect(() => {
-        const tripDetails = tripDetailDataGroupingDay.get(selectedDay);
-        if (tripDetails && tripDetails.length > 0) {
-            setFocusedPlace(tripDetails[0]);
+        if (!tripId) {
+            navi('/');
+            return;
         }
-    }, [selectedDay])
+
+        const fetchTrip = async () => {
+            setIsLoading(true);
+            setError(null);
+            try {
+                const response = await fetch(`${PLAN_URL}/trip/plan/${tripId}`, { credentials: 'include' });
+                if (!response.ok) {
+                    throw new Error('여행 정보를 불러오는 데 실패했습니다.');
+                }
+                const data: TripDTO = await response.json();
+
+                setTrip(data);
+            } catch (err) {
+                setError((err as Error).message);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTrip();
+    }, [tripId, navi]);
+
+    useEffect(() => {
+
+        if (!trip) return;
+
+        const selectedDayData = trip.tripDays.find(day => day.dayOrder === selectedDay);
+        const placesForSelectedDay = selectedDayData?.tripPlaces;
+
+        if (placesForSelectedDay && placesForSelectedDay.length > 0) {
+            setFocusedPlace(placesForSelectedDay[0]);
+        } else {
+            setFocusedPlace(undefined);
+        }
+    }, [selectedDay, trip]);
+
+    if (isLoading) {
+        return <div className="h-full flex justify-center items-center"><p>여행 정보를 불러오는 중입니다...</p></div>;
+    }
+
+    if (error) {
+        return <div className="h-full flex justify-center items-center text-red-500"><p>{error}</p></div>;
+    }
 
     return (
         <div className="h-full flex flex-col">
             <main className="flex flex-1 overflow-hidden">
                 <TripPlanSidebar
-                    tripData={tripData}
-                    tripDetailDataGroupingDay={tripDetailDataGroupingDay}
+                    trip={trip}
                     selectedDay={selectedDay}
                     setSelectedDay={setSelectedDay}
                     setFocusedPlace={setFocusedPlace}
                 />
                 <div className='flex-1 overflow-hidden relative'>
                     <TripPlanMap
-                        tripDetailDataGroupingDay={tripDetailDataGroupingDay}
+                        trip={trip}
                         selectedDay={selectedDay}
                         focusedPlace={focusedPlace}
                         setFocusedPlace={setFocusedPlace}

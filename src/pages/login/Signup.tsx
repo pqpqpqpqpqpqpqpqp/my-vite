@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { BASE_URL } from '../../config';
@@ -10,7 +10,7 @@ export default function Signup() {
         pw: '',
         name: '',
         nickname: '',
-        birth: '',
+        birth: '2000-01-01',
         gender: '',
     });
 
@@ -147,6 +147,8 @@ export default function Signup() {
                                 name="birth"
                                 type="date"
                                 required
+                                min="1901-01-01"
+                                max="2025-12-31"
                                 value={formData.birth}
                                 onChange={handleInputChange}
                                 className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"

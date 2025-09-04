@@ -5,14 +5,14 @@ import { differenceInCalendarDays, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "sonner";
-import type { SelectedPlace, TripEntity } from "../../types/trip";
+import type { PlaceSuggestion } from "../../types/trip";
 import { PLAN_URL } from "../../config";
 
 import "react-day-picker/dist/style.css";
 import "../../css/calender.css";
 
 interface LocationState {
-    selectedPlaces: SelectedPlace[];
+    selectedPlaces: PlaceSuggestion[];
     tripTitle: string;
 }
 
@@ -22,6 +22,16 @@ interface CreateTripRequestDTO {
     startDate: Date;
     endDate: Date;
     mainPlaceIds: string[];
+}
+
+interface CreateTripResponseDTO {
+    tripId: string;
+    ownerId: string;
+    tripTitle: string;
+    startDate: string;
+    endDate: string;
+    isPublic: boolean;
+    delYn: boolean;
 }
 
 export default function TripPlanSchedule() {
@@ -87,7 +97,7 @@ export default function TripPlanSchedule() {
                 throw new Error("여행 계획 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
             }
 
-            const createdTrip: TripEntity = await response.json();
+            const createdTrip: CreateTripResponseDTO = await response.json();
 
             toast.success("여행 계획이 저장되었습니다!");
             navi(`/trip/plan/detail/${createdTrip.tripId}`);
@@ -99,7 +109,6 @@ export default function TripPlanSchedule() {
             setIsCreating(false);
         }
     };
-
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
             <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-lg">

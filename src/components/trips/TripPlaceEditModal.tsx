@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
-import type { TripPlace } from '../../types/trip';
+import type { TripPlaceDTO } from '../../types/trip';
 import { FaTimes, FaSave } from 'react-icons/fa';
+import { PLAN_URL } from '../../config';
+
+interface PlaceDetailRequestDTO {
+    visitTime: string,
+    memo: string,
+}
 
 interface PlaceEditModalProps {
-    place: TripPlace;
+    place: TripPlaceDTO;
     onClose: () => void;
-    onSave: (tripPlaceId: string, memo: string, visitTime: string) => void;
+    onSave: (updatedPlace: TripPlaceDTO) => void;
 }
 
 export default function TripPlaceEditModal({ place, onClose, onSave }: PlaceEditModalProps) {
@@ -14,25 +20,44 @@ export default function TripPlaceEditModal({ place, onClose, onSave }: PlaceEdit
 
     useEffect(() => {
         if (place) {
-            setMemo(place.placeMemo || '');
+            setMemo(place.memo || '');
             setVisitTime(place.visitTime || '');
         }
     }, [place]);
 
-    const handleSave = () => {
-        if (!place.tripPlaceId) return;
+    const handleSave = async () => {
+        if (place.memo === memo && place.visitTime === visitTime) {
+            onClose();
+            return;
+        }
 
-        onSave(place.tripPlaceId, memo, visitTime);
+        const payload: PlaceDetailRequestDTO = {
+            visitTime: visitTime,
+            memo: memo
+        }
+
+        const response = await fetch(`${PLAN_URL}/trip/place/${place.tripPlaceId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error(`서버 에러: ${response.statusText}`);
+
+        const updatedPlace: TripPlaceDTO = await response.json();
+
+        onSave(updatedPlace);
         onClose();
     };
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            className="fixed inset-0 flex bg-black/60 justify-center items-center z-50"
             onClick={onClose}
         >
             <div
-                className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md"
+                className="relative z-10 bg-white rounded-lg shadow-xl p-6 w-full max-w-md animate-slide-up"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center border-b pb-3 mb-4">
@@ -89,6 +114,6 @@ export default function TripPlaceEditModal({ place, onClose, onSave }: PlaceEdit
                     </button>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

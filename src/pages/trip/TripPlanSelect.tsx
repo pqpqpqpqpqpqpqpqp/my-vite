@@ -3,24 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
-import type { PlaceSuggestion, SelectedPlace } from "../../types/trip";
+import type { PlaceSuggestion } from "../../types/trip";
 import { FaSearch, FaMapMarkerAlt, FaTimes, FaArrowRight, FaMapMarkedAlt, FaPen } from "react-icons/fa";
 
 const MAX_SELECTED_PLACES = 5;
-
 
 export default function TripPlanSelect() {
     const [tripTitle, setTripTitle] = useState("");
     const [searchText, setSearchText] = useState("");
     const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [selectedPlaces, setSelectedPlaces] = useState<SelectedPlace[]>([]);
+    const [selectedPlaces, setSelectedPlaces] = useState<PlaceSuggestion[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const placesLib = useMapsLibrary("places");
     const navi = useNavigate();
 
     useEffect(() => {
-        if (!searchText) {
+        if (!searchText.trim()) {
             setSuggestions([]);
             return;
         }
@@ -28,26 +27,30 @@ export default function TripPlanSelect() {
         const timer = setTimeout(() => {
             async function fetchSuggestions() {
                 if (!placesLib) return;
+                setIsLoading(true);
 
-                const request = {
-                    input: searchText,
-                    language: 'ko',
-                };
+                const request = { input: searchText, language: 'ko' };
 
                 try {
                     const res = await placesLib.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
                     const allowedTypes = ["country", "administrative_area_level_1", "locality"];
+
                     const filtered = (res?.suggestions || []).filter(s =>
                         (s.placePrediction?.types || []).some(t => allowedTypes.includes(t))
                     );
+
                     const simplified: PlaceSuggestion[] = filtered.map(s => ({
                         placeId: s.placePrediction?.placeId || "",
                         placeName: s.placePrediction?.mainText?.text || "",
+                        placeText: s.placePrediction?.secondaryText?.text || ""
                     }));
+
                     setSuggestions(simplified);
                 } catch (error) {
                     console.error("Autocomplete error:", error);
                     setSuggestions([]);
+                } finally {
+                    setIsLoading(false);
                 }
             }
 
@@ -57,9 +60,7 @@ export default function TripPlanSelect() {
         return () => clearTimeout(timer);
     }, [searchText, placesLib]);
 
-    const handleSelect = async (suggestion: PlaceSuggestion) => {
-        if (!placesLib || !suggestion.placeId) return;
-
+    const handleSelect = (suggestion: PlaceSuggestion) => {
         if (selectedPlaces.some(p => p.placeId === suggestion.placeId)) {
             toast.info(`${suggestion.placeName}은(는) 이미 추가된 장소입니다.`);
             setSearchText("");
@@ -72,34 +73,7 @@ export default function TripPlanSelect() {
             return;
         }
 
-        setIsLoading(true);
-        try {
-            const placeDetails = await new placesLib.Place({ id: suggestion.placeId })
-                .fetchFields({ fields: ["formattedAddress", "types", "location"] });
-
-            const { place } = placeDetails;
-            const matchedType = (place.types || []).find(t =>
-                ["country", "administrative_area_level_1", "locality"].includes(t)
-            );
-
-            if (place) {
-                const newPlace: SelectedPlace = {
-                    placeId: suggestion.placeId,
-                    placeName: suggestion.placeName,
-                    address: place.formattedAddress || "",
-                    placeType: matchedType || "political",
-                    placeLat: place.location?.lat() || 0,
-                    placeLng: place.location?.lng() || 0,
-                };
-                setSelectedPlaces(prev => [...prev, newPlace]);
-            }
-        } catch (err) {
-            console.error("Place fetch error:", err);
-            toast.error("장소를 불러오는 중 오류가 발생했습니다.");
-        } finally {
-            setIsLoading(false);
-        }
-
+        setSelectedPlaces(prev => [...prev, suggestion]);
         setSearchText("");
         setSuggestions([]);
         setActiveIndex(-1);
@@ -121,9 +95,9 @@ export default function TripPlanSelect() {
     };
 
     const handleNextClick = () => {
-        let finalTripTitle = tripTitle;
+        let finalTripTitle = tripTitle.trim();
 
-        if (!finalTripTitle.trim()) {
+        if (!finalTripTitle) {
             if (selectedPlaces.length === 1) {
                 finalTripTitle = `${selectedPlaces[0].placeName} 여행`;
             } else if (selectedPlaces.length > 1 && selectedPlaces.length < 4) {
@@ -205,12 +179,17 @@ export default function TripPlanSelect() {
                                 {suggestions.map((s, i) => (
                                     <li
                                         key={s.placeId}
-                                        className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${i === activeIndex ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                                        className={`flex items-center gap-3 p-4 cursor-pointer transition-colors ${i === activeIndex ? "bg-blue-100" : "hover:bg-gray-50"}`}
                                         onMouseEnter={() => setActiveIndex(i)}
                                         onClick={() => handleSelect(s)}
                                     >
                                         <FaMapMarkerAlt className="text-gray-400" />
-                                        <span className="text-gray-700">{s.placeName}</span>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium text-gray-800">{s.placeName}</span>
+                                            {s.placeText && (
+                                                <span className="text-sm text-gray-500">{s.placeText}</span>
+                                            )}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>

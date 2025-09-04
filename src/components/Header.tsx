@@ -63,21 +63,30 @@ export default function Header() {
                     {menuOpen && (
                         <div className="absolute right-0 mt-2 w-40 bg-white shadow-lg rounded border border-gray-200 flex flex-col">
                             {isLoggedIn ? (
-                                <>
-                                    <Link
-                                        to="/user/profile"
-                                        className="px-4 py-2 hover:bg-gray-100 transition"
-                                        onClick={() => setMenuOpen(false)}
-                                    >
-                                        프로필
-                                    </Link>
+                                <div className="divide-y flex flex-col">
+                                    <div className="divide-none flex flex-col">
+                                        <Link
+                                            to="/user/profile"
+                                            className="px-4 py-2 hover:bg-gray-100 transition"
+                                            onClick={() => setMenuOpen(false)}
+                                        >
+                                            프로필
+                                        </Link>
+                                        <Link
+                                            to="/trip/plan/list"
+                                            className="px-4 py-2 hover:bg-gray-100 transition"
+                                            onClick={() => setMenuOpen(false)}
+                                        >
+                                            내 일정
+                                        </Link>
+                                    </div>
                                     <button
                                         className="px-4 py-2 text-left hover:bg-gray-100 transition"
                                         onClick={logout}
                                     >
                                         로그아웃
                                     </button>
-                                </>
+                                </div>
                             ) : (
                                 <>
                                     <Link

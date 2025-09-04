@@ -3,62 +3,36 @@ import { useNavigate, useParams } from "react-router-dom";
 import TripPlanMap from "../../components/trips/TripPlanMap";
 import TripPlaceSearchModal from "../../components/trips/TripPlaceSearchModal";
 import TripPlaceEditModal from "../../components/trips/TripPlaceEditModal";
-import type { GetTripDetailResponseDTO, TripDayDTO, PlaceDTO, TripPlace } from "../../types/trip";
+import type { TripDTO, TripPlaceDTO } from "../../types/trip";
 import { FaMapMarkedAlt, FaPlus, FaPencilAlt, FaTrash, FaCheckCircle, FaClock } from "react-icons/fa";
 import { PLAN_URL } from "../../config";
 import { toast } from "sonner";
-
+// 내일 할일: 여기에 dnd넣어서 순서변경 구현
 const calculateDaysCount = (start: string, end: string): number => {
     const startDate = new Date(start);
     const endDate = new Date(end);
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays + 1;
-};
-
-const mapBackendToFrontend = (tripDays: TripDayDTO[]): Map<number, TripPlace[]> => {
-    const newMap = new Map<number, TripPlace[]>();
-
-    tripDays.forEach(dayDto => {
-        const dayNumber = dayDto.dayOrder;
-        // [수정] 서버 DTO(TripPlaceInDayDTO)를 클라이언트 모델(TripPlace)로 변환합니다.
-        const mappedPlaces: TripPlace[] = dayDto.tripPlaces.map(placeDto => ({
-            tripPlaceId: placeDto.tripPlaceId,
-            dayOrder: dayNumber,
-            orderInDay: placeDto.orderInDay,
-            placeId: placeDto.place.placeId,
-            placeName: placeDto.place.placeName,
-            placeLat: placeDto.place.placeLat,
-            placeLng: placeDto.place.placeLng,
-            placeMemo: placeDto.memo, // DTO의 memo -> 클라이언트 모델의 placeMemo
-            visitTime: placeDto.visitTime,
-        }));
-        newMap.set(dayNumber, mappedPlaces);
-    });
-
-    return newMap;
+    return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
 };
 
 export default function TripPlanDetail() {
     const navi = useNavigate();
     const { tripId } = useParams<{ tripId: string }>();
 
-    // --- State Definitions ---
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [tripTitle, setTripTitle] = useState("");
-    const [startDate, setStartDate] = useState<string | null>(null);
+
     const [daysCount, setDaysCount] = useState(0);
-    // [수정] 상태의 타입을 새로운 공용 타입으로 변경합니다.
-    const [mainPlaces, setMainPlaces] = useState<PlaceDTO[]>([]);
+    const [trip, setTrip] = useState<TripDTO | null>(null);
+
     const [selectedDay, setSelectedDay] = useState(1);
-    const [tripDetailDataGroupingDay, setTripDetailDataGroupingDay] = useState(new Map<number, TripPlace[]>());
-    const [focusedPlace, setFocusedPlace] = useState<TripPlace | undefined>(undefined);
+    const [focusedPlace, setFocusedPlace] = useState<TripPlaceDTO | undefined>(undefined);
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-    const [editingPlace, setEditingPlace] = useState<TripPlace | null>(null);
+    const [editingPlace, setEditingPlace] = useState<TripPlaceDTO | null>(null);
 
     useEffect(() => {
         if (!tripId) {
+            toast.warning('여행 정보가 없습니다');
             navi('/trip/plan/select');
             return;
         }
@@ -66,28 +40,17 @@ export default function TripPlanDetail() {
         const fetchTripDetail = async () => {
             setIsLoading(true);
             setError(null);
+
             try {
                 const response = await fetch(`${PLAN_URL}/trip/plan/${tripId}`, {
                     method: "GET",
                     credentials: "include"
                 });
+                if (!response.ok) throw new Error("여행 상세 정보를 불러오는데 실패했습니다.");
+                const data: TripDTO = await response.json();
 
-                if (!response.ok) {
-                    throw new Error("여행 상세 정보를 불러오는데 실패했습니다.");
-                }
-
-                // [수정] API 응답 타입을 새로운 DTO로 지정합니다.
-                const data: GetTripDetailResponseDTO = await response.json();
-
-                setTripTitle(data.tripTitle);
-                setStartDate(data.startDate);
+                setTrip(data);
                 setDaysCount(calculateDaysCount(data.startDate, data.endDate));
-                setMainPlaces(data.mainPlaces);
-
-                // [수정] 최신화된 변환 함수를 사용합니다.
-                const mappedData = mapBackendToFrontend(data.tripDays);
-                setTripDetailDataGroupingDay(mappedData);
-
             } catch (err) {
                 console.error("Fetch Error:", err);
                 setError((err as Error).message);
@@ -99,8 +62,8 @@ export default function TripPlanDetail() {
         fetchTripDetail();
     }, [tripId, navi]);
 
-    const handlePlaceDelete = async (day: number, order: number, tripPlaceId: string) => {
-        if (!window.confirm("정말로 이 장소를 삭제하시겠습니까?")) return;
+    const handlePlaceDelete = async (dayNumber: number, tripPlaceId: string) => {
+        if (!window.confirm("정말로 이 장소를 삭제하시겠습니까?") || !trip) return;
 
         try {
             const response = await fetch(`${PLAN_URL}/trip/place/del/${tripPlaceId}`, {
@@ -110,14 +73,15 @@ export default function TripPlanDetail() {
 
             if (!response.ok) throw new Error("장소 삭제에 실패했습니다.");
 
-            setTripDetailDataGroupingDay(prevMap => {
-                const newMap = new Map(prevMap);
-                const dayPlaces = newMap.get(day) || [];
-                const updatedPlaces = dayPlaces.filter(p => p.orderInDay !== order)
-                    .map((p, index) => ({ ...p, orderInDay: index + 1 }));
-                newMap.set(day, updatedPlaces);
-                return newMap;
+            const updatedTripDays = trip.tripDays.map(day => {
+                if (day.dayOrder === dayNumber) {
+                    const updatedPlaces = day.tripPlaces.filter(p => p.tripPlaceId !== tripPlaceId);
+                    return { ...day, tripPlaces: updatedPlaces };
+                }
+                return day;
             });
+            setTrip({ ...trip, tripDays: updatedTripDays });
+
             toast.success("장소가 삭제되었습니다.");
 
         } catch (err) {
@@ -125,56 +89,25 @@ export default function TripPlanDetail() {
         }
     };
 
+    const handleSavePlaceDetails = (updatedPlace: TripPlaceDTO) => {
+        if (!trip) return;
+        const updatedTripDays = trip.tripDays.map(day => ({
+            ...day,
+            tripPlaces: day.tripPlaces.map(p =>
+                p.tripPlaceId === updatedPlace.tripPlaceId ? updatedPlace : p
+            )
+        }));
+        setTrip({ ...trip, tripDays: updatedTripDays });
+        setEditingPlace(null);
+        toast.success("장소 정보가 수정되었습니다.");
+    };
+
     const getFormattedDate = (dayIndex: number) => {
-        if (!startDate) return '';
-        const date = new Date(startDate);
+        if (!trip?.startDate) return '';
+        const date = new Date(trip.startDate);
         date.setDate(date.getDate() + dayIndex);
         const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', weekday: 'long' };
         return new Intl.DateTimeFormat('ko-KR', options).format(date);
-    };
-
-    const handleSavePlaceDetails = async (tripPlaceId: string, newMemo: string, newTime: string) => {
-        if (!editingPlace) return;
-
-        const originalPlace = editingPlace;
-        const day = originalPlace.dayOrder;
-        const order = originalPlace.orderInDay;
-
-        // Optimistic UI Update
-        setTripDetailDataGroupingDay(prevMap => {
-            const newMap = new Map(prevMap);
-            const dayPlaces = newMap.get(day) || [];
-            const updatedPlaces = dayPlaces.map(p =>
-                p.orderInDay === order ? { ...p, placeMemo: newMemo, visitTime: newTime } : p
-            );
-            newMap.set(day, updatedPlaces);
-            return newMap;
-        });
-
-        // API 호출 (메모와 시간이 변경되었을 경우에만)
-        try {
-            if (newMemo !== (originalPlace.placeMemo || '')) {
-                await fetch(`${PLAN_URL}/trip/place/${tripPlaceId}/memo`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memo: newMemo }),
-                    credentials: 'include'
-                });
-            }
-            if (newTime !== (originalPlace.visitTime || '')) {
-                await fetch(`${PLAN_URL}/trip/place/${tripPlaceId}/time`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ visitTime: newTime }),
-                    credentials: 'include'
-                });
-            }
-            toast.success("변경사항이 저장되었습니다.");
-        } catch (error) {
-            console.error("상세 정보 업데이트 실패:", error);
-            toast.error("저장에 실패했습니다. 다시 시도해주세요.");
-            // TODO: 실패 시 UI 롤백
-        }
     };
 
     if (isLoading) {
@@ -208,7 +141,7 @@ export default function TripPlanDetail() {
                     <div className="lg:sticky lg:top-6">
                         <div className="h-200 rounded-2xl overflow-hidden shadow-lg border">
                             <TripPlanMap
-                                tripDetailDataGroupingDay={tripDetailDataGroupingDay}
+                                trip={trip}
                                 selectedDay={selectedDay}
                                 focusedPlace={focusedPlace}
                                 setFocusedPlace={setFocusedPlace}
@@ -222,7 +155,7 @@ export default function TripPlanDetail() {
                     {/* 헤더 및 완료 버튼 */}
                     <header className="flex justify-between items-center mb-6">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-800">{tripTitle}</h1>
+                            <h1 className="text-3xl font-bold text-gray-800">{trip?.tripTitle}</h1>
                             <p className="text-gray-500">{daysCount}일간의 여정을 계획해보세요.</p>
                         </div>
                         <button
@@ -236,113 +169,55 @@ export default function TripPlanDetail() {
 
                     {/* 일자별 계획 리스트 */}
                     <div className="space-y-6">
-                        {Array.from({ length: daysCount }, (_, i) => {
-                            const dayNumber = i + 1;
-                            const tripDetails = tripDetailDataGroupingDay.get(dayNumber) || [];
-
-                            return (
-                                <div key={dayNumber} className="bg-white p-6 rounded-2xl shadow-md border">
-                                    {/* Day 헤더 */}
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">
-                                            {dayNumber}
-                                        </div>
-                                        <div>
-                                            <h2 className="text-xl font-bold text-gray-800">Day {dayNumber}</h2>
-                                            <p className="text-sm text-gray-500">{getFormattedDate(i)}</p>
-                                        </div>
+                        {(trip?.tripDays ?? []).map((day, i) => (
+                            <div key={day.tripDayId} className="bg-white p-6 rounded-2xl shadow-md border">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">{day.dayOrder}</div>
+                                    <div>
+                                        <h2 className="text-xl font-bold text-gray-800">Day {day.dayOrder}</h2>
+                                        <p className="text-sm text-gray-500">{getFormattedDate(i)}</p>
                                     </div>
-
-                                    {/* 장소 목록 */}
-                                    <div className="space-y-3">
-                                        {tripDetails.length > 0 ? (
-                                            tripDetails.map((place) => (
-                                                <div
-                                                    key={place.tripPlaceId} // [수정] key를 고유 ID로 변경
-                                                    className={`p-4 rounded-lg border transition-all duration-300 ${focusedPlace?.tripPlaceId === place.tripPlaceId ? 'bg-blue-50 border-blue-400 shadow-lg' : 'bg-gray-50 border-transparent hover:border-gray-300'}`}
-                                                >
-                                                    <div className="flex items-start gap-4">
-                                                        <div className="text-xl font-bold text-blue-500 mt-1">{place.orderInDay}</div>
-                                                        <div className="flex-1">
-                                                            <div className="flex justify-between items-center">
-                                                                <button
-                                                                    className="font-semibold text-gray-800 text-left hover:text-blue-600"
-                                                                    onClick={() => {
-                                                                        setFocusedPlace(place);
-                                                                        setSelectedDay(dayNumber);
-                                                                    }}
-                                                                >
-                                                                    {place.placeName}
-                                                                </button>
-                                                                <div className="flex items-center gap-3">
-                                                                    <button
-                                                                        className="text-gray-400 hover:text-blue-500"
-                                                                        onClick={() => setEditingPlace(place)} // 수정 모달 열기
-                                                                    >
-                                                                        <FaPencilAlt />
-                                                                    </button>
-                                                                    <button
-                                                                        className="text-gray-400 hover:text-red-500"
-                                                                        onClick={() => {
-                                                                            if (!place.tripPlaceId) return;
-                                                                            handlePlaceDelete(dayNumber, place.orderInDay, place.tripPlaceId)
-                                                                        }} // 수정된 삭제 함수 호출
-                                                                    >
-                                                                        <FaTrash />
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* 시간과 메모를 텍스트로 표시 */}
-                                                            <div className="mt-2 text-sm text-gray-600 flex items-center gap-2">
-                                                                <FaClock className="text-gray-400" />
-                                                                <span>{place.visitTime || '시간 미정'}</span>
-                                                            </div>
-                                                            <div className="mt-1 text-sm text-gray-600 flex items-start gap-2">
-                                                                <FaPencilAlt className="text-gray-400 mt-1 flex-shrink-0" />
-                                                                <p className="whitespace-pre-wrap">{place.placeMemo || '메모 없음'}</p>
+                                </div>
+                                <div className="space-y-3">
+                                    {day.tripPlaces.length > 0 ? (
+                                        day.tripPlaces.map((place) => (
+                                            <div key={place.tripPlaceId} className={`p-4 rounded-lg border transition-all duration-300 ${focusedPlace?.tripPlaceId === place.tripPlaceId ? 'bg-blue-50 border-blue-400 shadow-lg' : 'bg-gray-50 border-transparent hover:border-gray-300'}`}>
+                                                <div className="flex items-start gap-4">
+                                                    <div className="text-xl font-bold text-blue-500 mt-1">{place.orderInDay}</div>
+                                                    <div className="flex-1">
+                                                        <div className="flex justify-between items-center">
+                                                            <button className="font-semibold text-gray-800 text-left hover:text-blue-600" onClick={() => { setFocusedPlace(place); setSelectedDay(day.dayOrder); }}>{place.placeName}</button>
+                                                            <div className="flex items-center gap-3">
+                                                                <button className="text-gray-400 hover:text-blue-500" onClick={() => setEditingPlace(place)}><FaPencilAlt /></button>
+                                                                <button className="text-gray-400 hover:text-red-500" onClick={() => handlePlaceDelete(day.dayOrder, place.tripPlaceId)}><FaTrash /></button>
                                                             </div>
                                                         </div>
+                                                        <div className="mt-2 text-sm text-gray-600 flex items-center gap-2"><FaClock className="text-gray-400" /><span>{place.visitTime || '시간 미정'}</span></div>
+                                                        <div className="mt-1 text-sm text-gray-600 flex items-start gap-2"><FaPencilAlt className="text-gray-400 mt-1 flex-shrink-0" /><p className="whitespace-pre-wrap">{place.memo || '메모 없음'}</p></div>
                                                     </div>
                                                 </div>
-                                            ))
-                                        ) : (
-                                            <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg">
-                                                <FaMapMarkedAlt className="mx-auto text-3xl text-gray-300 mb-2" />
-                                                <p>아직 계획된 장소가 없습니다.</p>
                                             </div>
-                                        )}
-                                    </div>
-
-                                    {/* 장소 추가 버튼 */}
-                                    <button
-                                        className="w-full flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg font-semibold hover:bg-blue-100 transition-colors"
-                                        onClick={() => {
-                                            setSelectedDay(dayNumber);
-                                            setIsSearchModalOpen(true);
-                                        }}
-                                    >
-                                        <FaPlus /> 장소 추가하기
-                                    </button>
+                                        ))
+                                    ) : (
+                                        <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg"><FaMapMarkedAlt className="mx-auto text-3xl text-gray-300 mb-2" /><p>아직 계획된 장소가 없습니다.</p></div>
+                                    )}
                                 </div>
-                            );
-                        })}
+                                <button className="w-full flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg font-semibold hover:bg-blue-100 transition-colors" onClick={() => { setSelectedDay(day.dayOrder); setIsSearchModalOpen(true); }}><FaPlus /> 장소 추가하기</button>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
 
-            {/* 장소 검색 모달 */}
             {isSearchModalOpen && (
                 <TripPlaceSearchModal
-                    selectedPlaces={mainPlaces}
                     selectedDay={selectedDay}
-                    tripDetailDataGroupingDay={tripDetailDataGroupingDay}
-                    setTripDetailDataGroupingDay={setTripDetailDataGroupingDay}
+                    trip={trip}
+                    setTrip={setTrip}
                     onClose={() => setIsSearchModalOpen(false)}
                 />
             )}
 
-            {/* [신규] 장소 수정 모달 */}
             {editingPlace && (
                 <TripPlaceEditModal
                     place={editingPlace}

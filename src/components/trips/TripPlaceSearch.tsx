@@ -1,13 +1,16 @@
+// 연결 안된 컴포넌트
+// 검색 템플릿 용도로 남겨둠
+// 수정하지 말것
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
-import type { TripPlace } from "../../types/trip";
+import type { PlaceSuggestion } from "../../types/trip";
 
 export default function TripPlanSelect() {
     const [searchText, setSearchText] = useState("");
-    const [suggestions, setSuggestions] = useState<TripPlace[]>([]);
+    const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
     const [activeIndex, setActiveIndex] = useState(-1);
-    const [selectedPlaces, setSelectedPlaces] = useState<TripPlace[]>([]);
+    const [selectedPlaces, setSelectedPlaces] = useState<PlaceSuggestion[]>([]);
     const navi = useNavigate();
     const placesLib = useMapsLibrary('places');
 
@@ -33,7 +36,7 @@ export default function TripPlanSelect() {
                     const simplifiedSuggestions = predictions.map((p) => ({
                         placeId: p.place_id,
                         placeName: p.description,
-                        types: p.types || [],
+                        placeText: p.types[0]
                     }));
                     setSuggestions(simplifiedSuggestions);
                 } else {
@@ -45,7 +48,7 @@ export default function TripPlanSelect() {
         return () => clearTimeout(timer);
     }, [searchText, autocompleteService]);
 
-    const handleSelect = async (suggestion: TripPlace) => {
+    const handleSelect = async (suggestion: PlaceSuggestion) => {
         if (!selectedPlaces.some(p => p.placeId === suggestion.placeId)) {
             setSelectedPlaces(prev => [...prev, suggestion]);
         }
