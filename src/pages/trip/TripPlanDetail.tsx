@@ -1,13 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import TripPlanMap from "../../components/trips/TripPlanMap";
 import TripPlaceSearchModal from "../../components/trips/TripPlaceSearchModal";
 import TripPlaceEditModal from "../../components/trips/TripPlaceEditModal";
 import type { TripDTO, TripPlaceDTO } from "../../types/trip";
 import { FaMapMarkedAlt, FaPlus, FaPencilAlt, FaTrash, FaCheckCircle, FaClock } from "react-icons/fa";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import type { DropResult } from "@hello-pangea/dnd";
 import { PLAN_URL } from "../../config";
 import { toast } from "sonner";
-// 내일 할일: 여기에 dnd넣어서 순서변경 구현
+
+interface TripPlaceOrderDTO {
+    tripPlaceId: string;
+    tripDayId: string;
+    orderInDay: number;
+}
+
 const calculateDaysCount = (start: string, end: string): number => {
     const startDate = new Date(start);
     const endDate = new Date(end);
@@ -30,37 +38,118 @@ export default function TripPlanDetail() {
     const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
     const [editingPlace, setEditingPlace] = useState<TripPlaceDTO | null>(null);
 
-    useEffect(() => {
+    const fetchTripDetail = useCallback(async () => {
         if (!tripId) {
             toast.warning('여행 정보가 없습니다');
             navi('/trip/plan/select');
             return;
         }
 
-        const fetchTripDetail = async () => {
-            setIsLoading(true);
-            setError(null);
+        setIsLoading(true);
+        setError(null);
 
-            try {
-                const response = await fetch(`${PLAN_URL}/trip/plan/${tripId}`, {
-                    method: "GET",
-                    credentials: "include"
-                });
-                if (!response.ok) throw new Error("여행 상세 정보를 불러오는데 실패했습니다.");
-                const data: TripDTO = await response.json();
+        try {
+            const response = await fetch(`${PLAN_URL}/trip/plan/${tripId}`, {
+                method: "GET",
+                credentials: "include"
+            });
+            if (!response.ok) throw new Error("여행 상세 정보를 불러오는데 실패했습니다.");
+            const data: TripDTO = await response.json();
 
-                setTrip(data);
-                setDaysCount(calculateDaysCount(data.startDate, data.endDate));
-            } catch (err) {
-                console.error("Fetch Error:", err);
-                setError((err as Error).message);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchTripDetail();
+            setTrip(data);
+            setDaysCount(calculateDaysCount(data.startDate, data.endDate));
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            setError((err as Error).message);
+        } finally {
+            setIsLoading(false);
+        }
     }, [tripId, navi]);
+
+    useEffect(() => {
+        fetchTripDetail();
+    }, [fetchTripDetail]);
+
+    const handleDragEnd = async (result: DropResult) => {
+        const { source, destination, draggableId } = result;
+
+        if (!destination || !trip) return;
+        if (source.droppableId === destination.droppableId && source.index === destination.index) {
+            return;
+        }
+
+        const newTripDays = Array.from(trip.tripDays);
+        const sourceDayOrder = parseInt(source.droppableId.split('-')[1]);
+        const destinationDayOrder = parseInt(destination.droppableId.split('-')[1]);
+        const sourceDayIndex = newTripDays.findIndex(day => day.dayOrder === sourceDayOrder);
+        const destinationDayIndex = newTripDays.findIndex(day => day.dayOrder === destinationDayOrder);
+        const sourceDay = newTripDays[sourceDayIndex];
+        const destinationDay = newTripDays[destinationDayIndex];
+        const draggedPlace = sourceDay.tripPlaces.find(p => p.tripPlaceId === draggableId);
+        if (!draggedPlace) return;
+
+        let serverOrderList: TripPlaceOrderDTO[] = [];
+
+        if (source.droppableId === destination.droppableId) {
+            const newPlaces = Array.from(sourceDay.tripPlaces);
+            const [reorderedItem] = newPlaces.splice(source.index, 1);
+            newPlaces.splice(destination.index, 0, reorderedItem);
+            const updatedPlaces = newPlaces.map((place, idx) => ({ ...place, orderInDay: idx + 1 }));
+            sourceDay.tripPlaces = updatedPlaces;
+            serverOrderList = updatedPlaces.map(p => ({
+                tripPlaceId: p.tripPlaceId,
+                tripDayId: sourceDay.tripDayId,
+                orderInDay: p.orderInDay
+            }));
+        }
+        // 다른 날짜로 이동
+        else {
+            const newSourcePlaces = Array.from(sourceDay.tripPlaces);
+            newSourcePlaces.splice(source.index, 1);
+            const updatedSourcePlaces = newSourcePlaces.map((p, idx) => ({ ...p, orderInDay: idx + 1 }));
+            sourceDay.tripPlaces = updatedSourcePlaces;
+
+            const newDestinationPlaces = Array.from(destinationDay.tripPlaces);
+            newDestinationPlaces.splice(destination.index, 0, draggedPlace);
+            const updatedDestinationPlaces = newDestinationPlaces.map((p, idx) => ({ ...p, orderInDay: idx + 1 }));
+            destinationDay.tripPlaces = updatedDestinationPlaces;
+
+            serverOrderList = [
+                ...updatedSourcePlaces.map(p => ({
+                    tripPlaceId: p.tripPlaceId,
+                    tripDayId: sourceDay.tripDayId,
+                    orderInDay: p.orderInDay
+                })),
+                ...updatedDestinationPlaces.map(p => ({
+                    tripPlaceId: p.tripPlaceId,
+                    tripDayId: destinationDay.tripDayId,
+                    orderInDay: p.orderInDay
+                }))
+            ];
+        }
+
+
+        // 2. 계산된 새로운 상태로 UI를 업데이트합니다.
+        // 화면은 여기서 즉시, 그리고 부드럽게 바뀝니다.
+        setTrip({ ...trip, tripDays: newTripDays });
+
+        // 3. 백그라운드에서 '조용히' 서버에 저장 요청을 보냅니다.
+        // 성공/실패 여부만 간단히 토스트 메시지로 알려줍니다.
+        fetch(`${PLAN_URL}/trip/place/order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(serverOrderList),
+        })
+            .then(response => {
+                if (!response.ok) throw new Error("순서 저장에 실패했습니다.");
+            })
+            .catch(error => {
+                console.error("순서 저장 실패:", error);
+                toast.error("순서 저장에 실패했습니다. 새로고침이 필요할 수 있습니다.");
+            });
+    };
+
 
     const handlePlaceDelete = async (dayNumber: number, tripPlaceId: string) => {
         if (!window.confirm("정말로 이 장소를 삭제하시겠습니까?") || !trip) return;
@@ -152,79 +241,97 @@ export default function TripPlanDetail() {
 
                 {/* 우측: 일정 계획 영역 */}
                 <div className="lg:w-1/2 w-full">
-                    {/* 헤더 및 완료 버튼 */}
-                    <header className="flex justify-between items-center mb-6">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-800">{trip?.tripTitle}</h1>
-                            <p className="text-gray-500">{daysCount}일간의 여정을 계획해보세요.</p>
-                        </div>
-                        <button
-                            className="flex items-center gap-2 px-5 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-all shadow-md transform hover:scale-105"
-                            onClick={() => navi("/")}
-                        >
-                            <FaCheckCircle />
-                            <span>계획 완료</span>
-                        </button>
-                    </header>
+                    {/* ... 헤더 및 완료 버튼 ... */}
 
-                    {/* 일자별 계획 리스트 */}
-                    <div className="space-y-6">
-                        {(trip?.tripDays ?? []).map((day, i) => (
-                            <div key={day.tripDayId} className="bg-white p-6 rounded-2xl shadow-md border">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">{day.dayOrder}</div>
-                                    <div>
-                                        <h2 className="text-xl font-bold text-gray-800">Day {day.dayOrder}</h2>
-                                        <p className="text-sm text-gray-500">{getFormattedDate(i)}</p>
+                    {/* 3. DragDropContext로 드래그 앤 드롭이 필요한 영역 전체를 감쌉니다. */}
+                    <DragDropContext onDragEnd={handleDragEnd}>
+                        <div className="space-y-6">
+                            {(trip?.tripDays ?? []).map((day, i) => (
+                                <div key={day.tripDayId} className="bg-white p-6 rounded-2xl shadow-md border">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg">{day.dayOrder}</div>
+                                        <div>
+                                            <h2 className="text-xl font-bold text-gray-800">Day {day.dayOrder}</h2>
+                                            <p className="text-sm text-gray-500">{getFormattedDate(i)}</p>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="space-y-3">
-                                    {day.tripPlaces.length > 0 ? (
-                                        day.tripPlaces.map((place) => (
-                                            <div key={place.tripPlaceId} className={`p-4 rounded-lg border transition-all duration-300 ${focusedPlace?.tripPlaceId === place.tripPlaceId ? 'bg-blue-50 border-blue-400 shadow-lg' : 'bg-gray-50 border-transparent hover:border-gray-300'}`}>
-                                                <div className="flex items-start gap-4">
-                                                    <div className="text-xl font-bold text-blue-500 mt-1">{place.orderInDay}</div>
-                                                    <div className="flex-1">
-                                                        <div className="flex justify-between items-center">
-                                                            <button className="font-semibold text-gray-800 text-left hover:text-blue-600" onClick={() => { setFocusedPlace(place); setSelectedDay(day.dayOrder); }}>{place.placeName}</button>
-                                                            <div className="flex items-center gap-3">
-                                                                <button className="text-gray-400 hover:text-blue-500" onClick={() => setEditingPlace(place)}><FaPencilAlt /></button>
-                                                                <button className="text-gray-400 hover:text-red-500" onClick={() => handlePlaceDelete(day.dayOrder, place.tripPlaceId)}><FaTrash /></button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mt-2 text-sm text-gray-600 flex items-center gap-2"><FaClock className="text-gray-400" /><span>{place.visitTime || '시간 미정'}</span></div>
-                                                        <div className="mt-1 text-sm text-gray-600 flex items-start gap-2"><FaPencilAlt className="text-gray-400 mt-1 flex-shrink-0" /><p className="whitespace-pre-wrap">{place.memo || '메모 없음'}</p></div>
-                                                    </div>
-                                                </div>
+
+                                    {/* 4. Droppable로 장소 목록 영역을 감싸 드롭 가능한 영역으로 만듭니다. */}
+                                    <Droppable droppableId={`day-${day.dayOrder}`}>
+                                        {(provided) => (
+                                            <div
+                                                ref={provided.innerRef}
+                                                {...provided.droppableProps}
+                                                className="space-y-3"
+                                            >
+                                                {day.tripPlaces.length > 0 ? (
+                                                    day.tripPlaces.map((place, index) => (
+                                                        // 5. Draggable로 각 장소 아이템을 감싸 드래그 가능하게 만듭니다.
+                                                        <Draggable key={place.tripPlaceId} draggableId={place.tripPlaceId} index={index}>
+                                                            {(provided, snapshot) => (
+                                                                <div
+                                                                    ref={provided.innerRef}
+                                                                    {...provided.draggableProps}
+                                                                    {...provided.dragHandleProps} // 이 props가 적용된 부분을 잡고 드래그합니다.
+                                                                    className={`p-4 rounded-lg border transition-all duration-300 
+                                                                        ${focusedPlace?.tripPlaceId === place.tripPlaceId ? 'bg-blue-50 border-blue-400 shadow-lg' : 'bg-gray-50 border-transparent hover:border-gray-300'}
+                                                                        ${snapshot.isDragging ? 'bg-blue-100 shadow-xl' : ''}` // 드래그 중일 때 스타일 변경
+                                                                    }
+                                                                >
+                                                                    <div className="flex items-start gap-4">
+                                                                        <div className="text-xl font-bold text-blue-500 mt-1">{place.orderInDay}</div>
+                                                                        <div className="flex-1">
+                                                                            <div className="flex justify-between items-center">
+                                                                                <button className="font-semibold text-gray-800 text-left hover:text-blue-600" onClick={() => { setFocusedPlace(place); setSelectedDay(day.dayOrder); }}>{place.placeName}</button>
+                                                                                <div className="flex items-center gap-3">
+                                                                                    <button className="text-gray-400 hover:text-blue-500" onClick={() => setEditingPlace(place)}><FaPencilAlt /></button>
+                                                                                    <button className="text-gray-400 hover:text-red-500" onClick={() => handlePlaceDelete(day.dayOrder, place.tripPlaceId)}><FaTrash /></button>
+                                                                                </div>
+                                                                            </div>
+                                                                            <div className="mt-2 text-sm text-gray-600 flex items-center gap-2"><FaClock className="text-gray-400" /><span>{place.visitTime || '시간 미정'}</span></div>
+                                                                            <div className="mt-1 text-sm text-gray-600 flex items-start gap-2"><FaPencilAlt className="text-gray-400 mt-1 flex-shrink-0" /><p className="whitespace-pre-wrap">{place.memo || '메모 없음'}</p></div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </Draggable>
+                                                    ))
+                                                ) : (
+                                                    <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg"><FaMapMarkedAlt className="mx-auto text-3xl text-gray-300 mb-2" /><p>아직 계획된 장소가 없습니다.</p></div>
+                                                )}
+                                                {provided.placeholder /* 드래그 시 아이템이 들어갈 공간을 만들어주는 역할 */}
                                             </div>
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg"><FaMapMarkedAlt className="mx-auto text-3xl text-gray-300 mb-2" /><p>아직 계획된 장소가 없습니다.</p></div>
-                                    )}
+                                        )}
+                                    </Droppable>
+
+                                    <button className="w-full flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg font-semibold hover:bg-blue-100 transition-colors" onClick={() => { setSelectedDay(day.dayOrder); setIsSearchModalOpen(true); }}><FaPlus /> 장소 추가하기</button>
                                 </div>
-                                <button className="w-full flex items-center justify-center gap-2 mt-4 px-4 py-3 bg-blue-50 text-blue-700 rounded-lg font-semibold hover:bg-blue-100 transition-colors" onClick={() => { setSelectedDay(day.dayOrder); setIsSearchModalOpen(true); }}><FaPlus /> 장소 추가하기</button>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    </DragDropContext>
                 </div>
             </div>
 
-            {isSearchModalOpen && (
-                <TripPlaceSearchModal
-                    selectedDay={selectedDay}
-                    trip={trip}
-                    setTrip={setTrip}
-                    onClose={() => setIsSearchModalOpen(false)}
-                />
-            )}
+            {
+                isSearchModalOpen && (
+                    <TripPlaceSearchModal
+                        selectedDay={selectedDay}
+                        trip={trip}
+                        setTrip={setTrip}
+                        onClose={() => setIsSearchModalOpen(false)}
+                    />
+                )
+            }
 
-            {editingPlace && (
-                <TripPlaceEditModal
-                    place={editingPlace}
-                    onClose={() => setEditingPlace(null)}
-                    onSave={handleSavePlaceDetails}
-                />
-            )}
-        </div>
+            {
+                editingPlace && (
+                    <TripPlaceEditModal
+                        place={editingPlace}
+                        onClose={() => setEditingPlace(null)}
+                        onSave={handleSavePlaceDetails}
+                    />
+                )
+            }
+        </div >
     );
 }
