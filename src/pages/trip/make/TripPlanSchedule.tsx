@@ -3,10 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DayPicker, type DateRange } from "react-day-picker";
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../../contexts/AuthContext";
 import { toast } from "sonner";
-import type { PlaceSuggestion } from "../../types/trip";
-import { PLAN_URL } from "../../config";
+import type { PlaceSuggestion } from "../../../types/trip";
+import { PLAN_URL } from "../../../config";
 
 import "react-day-picker/dist/style.css";
 import "../../css/calender.css";
@@ -100,7 +100,7 @@ export default function TripPlanSchedule() {
             const createdTrip: CreateTripResponseDTO = await response.json();
 
             toast.success("여행 계획이 저장되었습니다!");
-            navi(`/trip/plan/detail/${createdTrip.tripId}`);
+            navi(`/trip/plan/make/detail/${createdTrip.tripId}`);
 
         } catch (error) {
             console.error(error);

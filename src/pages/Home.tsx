@@ -27,7 +27,7 @@ export default function Home() {
                 <div className="relative z-10 p-4">
                     <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">여행, 이제 {serviceName}과 함께</h1>
                     <p className="mb-8 text-xl max-w-xl drop-shadow-md">계획부터 예약까지, 여행을 더 쉽고 즐겁게 만들어드립니다.</p>
-                    <Link to="/trip/plan/select">
+                    <Link to="/trip/plan/make/select">
                         <button className="px-8 py-4 bg-blue-600 text-white rounded-lg text-lg font-semibold hover:bg-blue-700 transition-transform transform hover:scale-105 shadow-lg">
                             여행 시작하기
                         </button>

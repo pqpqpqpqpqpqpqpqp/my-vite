@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import TripPlanMap from "../../components/trips/TripPlanMap";
-import TripPlaceSearchModal from "../../components/trips/TripPlaceSearchModal";
-import TripPlaceEditModal from "../../components/trips/TripPlaceEditModal";
-import type { TripDTO, TripPlaceDTO } from "../../types/trip";
-import { FaMapMarkedAlt, FaPlus, FaPencilAlt, FaTrash, FaCheckCircle, FaClock } from "react-icons/fa";
+import TripPlanMap from "../../../components/trips/TripPlanMap";
+import TripPlaceSearchModal from "../../../components/trips/TripPlaceSearchModal";
+import TripPlaceEditModal from "../../../components/trips/TripPlaceEditModal";
+import type { TripDTO, TripPlaceDTO } from "../../../types/trip";
+import { FaMapMarkedAlt, FaPlus, FaPencilAlt, FaTrash, FaClock } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
-import { PLAN_URL } from "../../config";
+import { PLAN_URL } from "../../../config";
 import { toast } from "sonner";
 
 interface TripPlaceOrderDTO {
@@ -16,13 +16,6 @@ interface TripPlaceOrderDTO {
     orderInDay: number;
 }
 
-const calculateDaysCount = (start: string, end: string): number => {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
-    return Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
-};
-
 export default function TripPlanDetail() {
     const navi = useNavigate();
     const { tripId } = useParams<{ tripId: string }>();
@@ -30,7 +23,6 @@ export default function TripPlanDetail() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const [daysCount, setDaysCount] = useState(0);
     const [trip, setTrip] = useState<TripDTO | null>(null);
 
     const [selectedDay, setSelectedDay] = useState(1);
@@ -57,7 +49,6 @@ export default function TripPlanDetail() {
             const data: TripDTO = await response.json();
 
             setTrip(data);
-            setDaysCount(calculateDaysCount(data.startDate, data.endDate));
         } catch (err) {
             console.error("Fetch Error:", err);
             setError((err as Error).message);

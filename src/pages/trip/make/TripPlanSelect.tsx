@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import { toast } from "sonner";
 import { ClipLoader } from "react-spinners";
-import type { PlaceSuggestion } from "../../types/trip";
+import type { PlaceSuggestion } from "../../../types/trip";
 import { FaSearch, FaMapMarkerAlt, FaTimes, FaArrowRight, FaMapMarkedAlt, FaPen } from "react-icons/fa";
 
 const MAX_SELECTED_PLACES = 5;
@@ -109,7 +109,7 @@ export default function TripPlanSelect() {
             }
         }
 
-        navi("/trip/plan/schedule", {
+        navi("/trip/plan/make/schedule", {
             state: {
                 selectedPlaces,
                 tripTitle: finalTripTitle

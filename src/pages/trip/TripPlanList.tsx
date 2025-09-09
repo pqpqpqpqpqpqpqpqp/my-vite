@@ -43,7 +43,7 @@ function TripItem({ trip }: TripItemProps) {
     const { startDate, endDate, tripId, tripTitle } = trip
     const status = getTripStatus(startDate, endDate);
 
-    const imageUrl = `https://source.unsplash.com/400x400/?${tripTitle.split(' ')[0] || 'travel'}`;
+    const imageUrl = 'https://source.unsplash.com/random/400x400/?travel';
 
     const period = `${startDate.replace(/-/g, '.')} - ${endDate.replace(/-/g, '.')}`;
 

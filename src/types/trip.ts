@@ -3,6 +3,7 @@ export interface TripDTO {
     tripTitle: string;
     startDate: string;
     endDate: string;
+    isPublic: boolean;
     tripDays: TripDayDTO[];
     mainPlaceIds: string[];
 }
@@ -11,6 +12,7 @@ export interface TripDayDTO {
     tripDayId: string;
     tripDate: string;
     dayOrder: number;
+    isPublic: boolean;
     tripPlaces: TripPlaceDTO[];
 }
 
