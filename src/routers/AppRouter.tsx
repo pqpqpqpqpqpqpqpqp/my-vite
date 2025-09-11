@@ -8,10 +8,14 @@ import TripPlanList from '../pages/trip/TripPlanList'
 import Profile from '../pages/user/Profile'
 import PrivateRoute from './PrivateRouter'
 
+// chat test
+import { TestChatPage } from '../chat/pages/TestChatPage'
+
 export default function AppRouter() {
     return (
         <div className="flex-1">
             <Routes>
+                <Route path='/test-chat' element={<TestChatPage />} />
                 <Route path='/' element={<Home />} />
                 <Route path="/trip/plan/list" element={
                     <PrivateRoute>
