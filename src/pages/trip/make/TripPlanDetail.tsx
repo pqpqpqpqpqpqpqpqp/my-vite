@@ -93,7 +93,7 @@ export default function TripPlanDetail() {
                 orderInDay: p.orderInDay
             }));
         }
-        // 다른 날짜로 이동
+
         else {
             const newSourcePlaces = Array.from(sourceDay.tripPlaces);
             newSourcePlaces.splice(source.index, 1);
@@ -119,13 +119,8 @@ export default function TripPlanDetail() {
             ];
         }
 
-
-        // 2. 계산된 새로운 상태로 UI를 업데이트합니다.
-        // 화면은 여기서 즉시, 그리고 부드럽게 바뀝니다.
         setTrip({ ...trip, tripDays: newTripDays });
 
-        // 3. 백그라운드에서 '조용히' 서버에 저장 요청을 보냅니다.
-        // 성공/실패 여부만 간단히 토스트 메시지로 알려줍니다.
         fetch(`${PLAN_URL}/trip/place/order`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -234,7 +229,6 @@ export default function TripPlanDetail() {
                 <div className="lg:w-1/2 w-full">
                     {/* ... 헤더 및 완료 버튼 ... */}
 
-                    {/* 3. DragDropContext로 드래그 앤 드롭이 필요한 영역 전체를 감쌉니다. */}
                     <DragDropContext onDragEnd={handleDragEnd}>
                         <div className="space-y-6">
                             {(trip?.tripDays ?? []).map((day, i) => (
@@ -247,7 +241,6 @@ export default function TripPlanDetail() {
                                         </div>
                                     </div>
 
-                                    {/* 4. Droppable로 장소 목록 영역을 감싸 드롭 가능한 영역으로 만듭니다. */}
                                     <Droppable droppableId={`day-${day.dayOrder}`}>
                                         {(provided) => (
                                             <div
@@ -257,16 +250,15 @@ export default function TripPlanDetail() {
                                             >
                                                 {day.tripPlaces.length > 0 ? (
                                                     day.tripPlaces.map((place, index) => (
-                                                        // 5. Draggable로 각 장소 아이템을 감싸 드래그 가능하게 만듭니다.
                                                         <Draggable key={place.tripPlaceId} draggableId={place.tripPlaceId} index={index}>
                                                             {(provided, snapshot) => (
                                                                 <div
                                                                     ref={provided.innerRef}
                                                                     {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps} // 이 props가 적용된 부분을 잡고 드래그합니다.
+                                                                    {...provided.dragHandleProps}
                                                                     className={`p-4 rounded-lg border transition-all duration-300 
                                                                         ${focusedPlace?.tripPlaceId === place.tripPlaceId ? 'bg-blue-50 border-blue-400 shadow-lg' : 'bg-gray-50 border-transparent hover:border-gray-300'}
-                                                                        ${snapshot.isDragging ? 'bg-blue-100 shadow-xl' : ''}` // 드래그 중일 때 스타일 변경
+                                                                        ${snapshot.isDragging ? 'bg-blue-100 shadow-xl' : ''}`
                                                                     }
                                                                 >
                                                                     <div className="flex items-start gap-4">
@@ -290,7 +282,7 @@ export default function TripPlanDetail() {
                                                 ) : (
                                                     <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-lg"><FaMapMarkedAlt className="mx-auto text-3xl text-gray-300 mb-2" /><p>아직 계획된 장소가 없습니다.</p></div>
                                                 )}
-                                                {provided.placeholder /* 드래그 시 아이템이 들어갈 공간을 만들어주는 역할 */}
+                                                {provided.placeholder}
                                             </div>
                                         )}
                                     </Droppable>
