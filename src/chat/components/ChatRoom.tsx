@@ -1,28 +1,25 @@
 import React, {useState, useEffect, useRef} from "react";
 import type { MessageDTO } from "../types/Chat";
-import { useWebSocket } from "../hooks/UseWebSocket";
+import { useAuth } from "../../contexts/AuthContext";
 import '../css/Chat.css';
 
 
-// 테스트용으로 사용할 임시 데이터
-const CURRENT_USER_ID = "user00002";
-const CHAT_ID = "mchat00000003";
-const FAKE_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJ0cmlwbWF0ZS1hdXRoIiwic3ViIjoidXNlcjAwMDAyIiwiZW1haWwiOiJyaWJib25AY29tbW9uLmNvbSIsImF1ZCI6WyJ0cmlwbWF0ZS1hcGkiXSwiaWF0IjoxNzU3NTgzNzEzLCJleHAiOjE3NTc1ODU1MTN9.xM_Je68zQ-qiDKWbiIhHdahK9LOHkD1xcqVNykXNHms";
-
 interface ChatRoomProps {
-    initialMessages: MessageDTO[];
+    chatId: string;
+    allMessages: MessageDTO[];
+    isConnected: boolean;
+    sendMessage: (contect: string) => void;
 }
 
 
-export const ChatRoom: React.FC<ChatRoomProps> = ({ initialMessages }) => {
-  const {
-    messages: realTimeMessages,
+export const ChatRoom: React.FC<ChatRoomProps> = ({ 
+    chatId,
+    allMessages,
     isConnected,
-    sendMessage,
-  } = useWebSocket(CHAT_ID, FAKE_TOKEN);
-
+    sendMessage,    
+}) => {
+    const {isLoggedIn, user} = useAuth();
     const [inputValue, setInputValue] = useState('');
-    const allMessages = [...initialMessages, ...realTimeMessages];
     const messageListRef = useRef<HTMLDivElement>(null);
 
 
@@ -34,22 +31,38 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ initialMessages }) => {
     }, [allMessages]);
 
     const handleSend = () => {
-        if(inputValue.trim()) {
-            sendMessage(inputValue);
-            setInputValue('');
-        }
+        const txt = inputValue.trim();
+        if(!txt) return;
+        if(!isConnected) return;
+        sendMessage(txt);
+        setInputValue("");
     };
+
+    // 로딩 중 또는 로그인이 안 된 경우 처리
+    if (!user || !isLoggedIn) {
+        return <div> 채팅에 참여하려면 로그인이 필요합니다. </div>;
+    }
 
     return (
         <div className="chat-container">
+            <span> Room: {chatId}</span>
+            <span
+                style={{
+                    marginLeft: 8,
+                    fontSize: 12,
+                    color: isConnected ? "#16a34a" : "#b91c1c",
+                }}
+            >
+                {isConnected ? "● Connected" : "● Disconnected"}
+            </span>
             <div className="message-list" ref={messageListRef}>
                 {allMessages.map((msg) => (
                     <div 
-                        key={msg.messageId} 
-                        className={`message-item ${msg.senderId === CURRENT_USER_ID ? 'mine' : 'others'}`}
+                        key={msg.messageId ?? `${msg.senderId}-${msg.sentAt}-${msg.content}`} 
+                        className={`message-item ${msg.senderId === user.userId ? 'mine' : 'others'}`}
                     >
                         <div className="message-bubble">{msg.content}</div>
-                        <div className="sender-info">{msg.senderId}</div>
+                        <div className="sender-info">{msg.senderNickname ?? msg.senderId}</div>
                     </div>
                 ))}
             </div>
@@ -60,8 +73,11 @@ export const ChatRoom: React.FC<ChatRoomProps> = ({ initialMessages }) => {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                    placeholder={isConnected ? "메세지를 입력하세요" : "연결 중 . . ."}
+                    disabled={!isConnected}
                 />
-                <button className="send-button" onClick={handleSend} disabled={!isConnected}>
+                <button className="send-button" 
+                        onClick={handleSend} disabled={!isConnected || inputValue.trim().length === 0}>
                     전송
                 </button>
             </div>

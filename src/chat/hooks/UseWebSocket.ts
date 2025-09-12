@@ -1,11 +1,12 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {Client, type IMessage} from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import type { MessageDTO } from "../types/Chat";
 import { WS_URL, SUBSCRIBE_URL, PUBLISH_URL} from "../ChatConfig";
 
 
 
-export const useWebSocket = (chatId: string | null, token: string | null) => {
+export const useWebSocket = (chatId: string | null, isLoggedIn: boolean) => {
   const [messages, setMessages] = useState<MessageDTO[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const clientRef = useRef<Client | null>(null);
@@ -13,20 +14,23 @@ export const useWebSocket = (chatId: string | null, token: string | null) => {
 
   useEffect( () => {
 
-    // 1) 연결 조건 - chatId && token
-    if (!chatId || !token) return;
+    // 1) 연결 조건 - chatId && 로그인 O
+    if (!chatId || !isLoggedIn) {
+      if(clientRef.current?.active) {
+        clientRef.current.deactivate();
+      }
+      return;
+    }
 
     // 2) STOMP 클라이언트 생성
     const client = new Client({
-        brokerURL:WS_URL,
-        connectHeaders: { Authorization: `Bearer ${token}`, },
+        webSocketFactory: () => new SockJS(WS_URL),
         debug: (str) => {
-            console.log(`[STOMP] ${new Date().toLocaleTimeString()} ${str}`);
+          console.log(`[STOMP_DEBUG] ${new Date().toLocaleTimeString()} ${str}`);
         },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
         heartbeatOutgoing: 4000,
-
     });
 
     client.onConnect =  () => {
@@ -62,22 +66,24 @@ export const useWebSocket = (chatId: string | null, token: string | null) => {
         }
     };
 
-  }, [chatId, token]);
+  }, [chatId, isLoggedIn]);
 
 
-  const sendMessage = (content: string) => {
+  const sendMessage = useCallback((content: string) => {
 
-    if (clientRef.current && isConnected && !chatId) {
+    if (clientRef.current && isConnected && chatId) {
       const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
       clientRef.current.publish({
         destination: publishPath,
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({content}),
       });
     }
+  }, [isConnected, chatId]);
+
+  // 6) 외부에서 메세지 목록을 초기화할 수 있는 함수
+  const setInitialMessages = (initialMessages: MessageDTO[]) => {
+    setMessages(initialMessages);
   };
 
-  return { messages, isConnected, sendMessage};
+  return { messages, isConnected, sendMessage, setInitialMessages};
 };
