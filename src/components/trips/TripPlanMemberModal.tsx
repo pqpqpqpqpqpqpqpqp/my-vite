@@ -81,17 +81,36 @@ export default function TripPlanMemberModal({ isOpen, onClose, currentTrip }: Tr
     }, [isOpen, fetchMembers]);
 
     const handleInvite = async (targetUserId: string) => {
+        if (!currentUser) {
+            toast.error("사용자 정보가 없어 초대할 수 없습니다.");
+            return;
+        }
+
         setIsInviting(targetUserId);
         try {
             const response = await fetch(`${PLAN_URL}/trip/member/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tripId: currentTrip.tripId, userId: targetUserId }),
+
+                body: JSON.stringify({
+                    tripId: currentTrip.tripId,
+                    userId: targetUserId,
+
+                    role: "MEMBER",
+                    status: "INVITED",
+                    inviterId: currentUser.userId
+                }),
+
                 credentials: 'include'
             });
-            if (!response.ok) throw new Error("초대에 실패했습니다.");
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => null);
+                throw new Error(errorData?.message || "초대에 실패했습니다.");
+            }
+
             toast.success("성공적으로 초대했습니다.");
-            fetchMembers(); // 멤버 목록 새로고침
+
         } catch (error) {
             toast.error((error as Error).message);
         } finally {
