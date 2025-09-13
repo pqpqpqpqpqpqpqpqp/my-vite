@@ -49,6 +49,11 @@ export default function AppRouter() {
                         <Profile />
                     </PrivateRoute>
                 } />
+                <Route path="/user/profile/:userId" element={
+                    <PrivateRoute>
+                        <Profile />
+                    </PrivateRoute>
+                } />
                 <Route path="*" element={<div>Not Found</div>} />
             </Routes>
         </div>

@@ -3,7 +3,7 @@ import type { PropsWithChildren } from "react";
 import { toast } from "sonner";
 import { BASE_URL } from '../config';
 
-interface User {
+export interface User {
     userId: string;
     birth: string;
     email: string;
@@ -31,15 +31,31 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const checkAuthStatus = useCallback(async () => {
         try {
             const response = await fetch(`${BASE_URL}/api/users/me`, { credentials: 'include' });
-            if (!response.ok) throw new Error('Not authenticated');
+
+            if (response.status === 403) {
+                if (isLoggedIn) {
+                    toast.info("세션이 만료되어 로그아웃되었습니다.");
+                }
+                setIsLoggedIn(false);
+                setUser(null);
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Not authenticated');
+            }
+
             const userInfo: User = await response.json();
             setIsLoggedIn(true);
             setUser(userInfo);
         } catch (error) {
+            if (isLoggedIn) {
+                toast.error("인증 상태 확인 중 오류가 발생했습니다.");
+            }
             setIsLoggedIn(false);
             setUser(null);
         }
-    }, []);
+    }, [isLoggedIn]);
 
     useEffect(() => {
         checkAuthStatus().finally(() => setIsLoading(false));
