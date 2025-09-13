@@ -4,7 +4,12 @@ import SockJS from 'sockjs-client';
 import type { MessageDTO } from "../types/Chat";
 import { WS_URL, SUBSCRIBE_URL, PUBLISH_URL} from "../ChatConfig";
 
-
+// ==============================
+// [PING-TEST] 스위치
+// true : sendMessage가 /pub/__ping 으로 전송(임시 진단용)
+// false: 원래 채팅 경로(/pub/message/send/mate/{chatId})로 전송(복구)
+// ==============================
+const PING_TEST = true;
 
 export const useWebSocket = (chatId: string | null, isLoggedIn: boolean) => {
   const [messages, setMessages] = useState<MessageDTO[]>([]);
@@ -70,15 +75,35 @@ export const useWebSocket = (chatId: string | null, isLoggedIn: boolean) => {
 
 
   const sendMessage = useCallback((content: string) => {
+    if(clientRef.current && isConnected) {
+      if (PING_TEST) {
+        clientRef.current.publish({
+          destination: "/pub/__ping",
+          body: JSON.stringify({test: "ping", ts: Date.now(), content})
+        });
+        return;
+      }
 
-    if (clientRef.current && isConnected && chatId) {
-      const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
-      clientRef.current.publish({
-        destination: publishPath,
-        body: JSON.stringify({content}),
-      });
+
+      if(chatId) {
+        const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
+        clientRef.current.publish({
+          destination: publishPath,
+          body: JSON.stringify({ content }),
+        });
+      }
     }
-  }, [isConnected, chatId]);
+  }, [isConnected, chatId]
+);
+    
+  //   if (clientRef.current && isConnected && chatId) {
+  //     const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
+  //     clientRef.current.publish({
+  //       destination: publishPath,
+  //       body: JSON.stringify({content}),
+  //     });
+  //   }
+  // }, [isConnected, chatId]);
 
   // 6) 외부에서 메세지 목록을 초기화할 수 있는 함수
   const setInitialMessages = (initialMessages: MessageDTO[]) => {
