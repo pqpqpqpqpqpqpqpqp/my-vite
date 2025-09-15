@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import Home from '../pages/Home'
+import TripPlanBoard from '../pages/trip/TripPlanBoard'
 import TripPlanView from "../pages/trip/TripPlanView"
 import TripPlanSelect from "../pages/trip/make/TripPlanSelect"
 import TripPlanSchedule from "../pages/trip/make/TripPlanSchedule"
@@ -13,6 +14,7 @@ export default function AppRouter() {
         <div className="flex-1">
             <Routes>
                 <Route path='/' element={<Home />} />
+                <Route path="/trip/plan/board" element={<TripPlanBoard />} />
                 <Route path="/trip/plan/list" element={
                     <PrivateRoute>
                         <TripPlanList />
@@ -39,6 +41,11 @@ export default function AppRouter() {
                     </PrivateRoute>
                 } />
                 <Route path="/user/profile" element={
+                    <PrivateRoute>
+                        <Profile />
+                    </PrivateRoute>
+                } />
+                <Route path="/user/profile/:userId" element={
                     <PrivateRoute>
                         <Profile />
                     </PrivateRoute>

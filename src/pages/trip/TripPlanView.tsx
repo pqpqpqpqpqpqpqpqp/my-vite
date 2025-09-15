@@ -2,181 +2,15 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TripPlanMap from '../../components/trips/TripPlanMap';
 import type { TripDTO, TripPlaceDTO } from '../../types/trip';
+import { useAuth } from '../../contexts/AuthContext';
 import { PLAN_URL } from '../../config';
-import { ClipLoader } from 'react-spinners';
-import { FaRegClock, FaRegCommentDots } from "react-icons/fa";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
-
-const ToggleSwitch = ({
-    isToggled,
-    onToggle,
-    disabled
-}: {
-    isToggled: boolean,
-    onToggle: (e: React.MouseEvent) => void,
-    disabled: boolean
-}) => (
-    <button
-        onClick={onToggle}
-        disabled={disabled}
-        className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
-    >
-        <span className={`absolute inset-0 rounded-full ${isToggled ? 'bg-blue-600' : 'bg-gray-300'}`}></span>
-        <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-300 ${isToggled ? 'translate-x-6' : 'translate-x-1'}`}></span>
-    </button>
-);
-
-interface TripPlanSidebarProps {
-    trip: TripDTO | null;
-    selectedDay: number;
-    setSelectedDay: (day: number) => void;
-    focusedPlace: TripPlaceDTO | undefined;
-    setFocusedPlace: (place: TripPlaceDTO | undefined) => void;
-    isUpdating: boolean;
-    onToggleTripPublic: () => void;
-    onToggleDayPublic: (tripDayId: string) => void;
-}
-
-function TripPlanSidebar({
-    trip,
-    selectedDay,
-    setSelectedDay,
-    focusedPlace,
-    setFocusedPlace,
-    isUpdating,
-    onToggleTripPublic,
-    onToggleDayPublic
-}: TripPlanSidebarProps) {
-    // 로딩 상태 UI
-    if (!trip) {
-        return (
-            <aside className="w-96 bg-white p-6 h-full overflow-y-auto shadow-lg border-r">
-                <div className="flex justify-center items-center h-full">
-                    <ClipLoader color={"#3B82F6"} loading={true} size={40} />
-                </div>
-            </aside>
-        );
-    }
-
-    const { tripTitle, startDate, endDate, tripDays, isPublic } = trip;
-
-    return (
-        <aside className="w-96 bg-white p-4 h-full overflow-y-auto shadow-lg border-r flex flex-col">
-            {/* 여행 정보 헤더 */}
-            <div className="mb-4 p-4 rounded-xl bg-gray-50 border">
-                <h1 className="text-xl font-bold text-gray-800 truncate">{tripTitle ?? '나의 여행'}</h1>
-                <p className="text-gray-500 text-sm mt-1">
-                    {startDate ?? ''} ~ {endDate ?? ''}
-                </p>
-
-                {/* 마스터 토글 */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                    <span className="font-semibold text-gray-700">전체 일정 공개</span>
-                    <ToggleSwitch
-                        isToggled={isPublic}
-                        onToggle={onToggleTripPublic}
-                        disabled={isUpdating}
-                    />
-                </div>
-            </div>
-
-            {/* 날짜별 아코디언 메뉴 */}
-            <div className="flex-1 space-y-2">
-                {tripDays.sort((a, b) => a.dayOrder - b.dayOrder).map((dayData) => {
-                    const isSelected = selectedDay === dayData.dayOrder;
-                    return (
-                        <div key={dayData.tripDayId} className="bg-white rounded-lg border transition-all duration-300">
-                            {/* 날짜 헤더 (클릭 영역) */}
-                            <div
-                                onClick={() => setSelectedDay(isSelected ? 0 : dayData.dayOrder)} // 다시 누르면 닫히도록
-                                className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors ${isSelected
-                                    ? 'bg-blue-50 rounded-t-lg'
-                                    : 'hover:bg-gray-50 rounded-lg'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <span className="font-bold text-lg text-blue-600">{dayData.dayOrder}일차</span>
-                                    <span className="text-sm text-gray-500">{dayData.tripPlaces.length}개 장소</span>
-                                </div>
-                                {isSelected ? <FaChevronUp className="text-blue-500" /> : <FaChevronDown className="text-gray-400" />}
-
-                                <div className="flex items-center gap-4">
-                                    {/* 개별 날짜 토글 */}
-                                    <ToggleSwitch
-                                        isToggled={dayData.isPublic}
-                                        onToggle={(e) => {
-                                            e.stopPropagation(); // 부모 div의 onClick 이벤트 방지
-                                            onToggleDayPublic(dayData.tripDayId);
-                                        }}
-                                        // 전체가 비공개이거나, API 통신 중일 때 비활성화
-                                        disabled={!isPublic || isUpdating}
-                                    />
-                                    {dayData.dayOrder === selectedDay ? <FaChevronUp /> : <FaChevronDown />}
-                                </div>
-                            </div>
-
-                            {/* 확장되었을 때 보이는 장소 목록 */}
-                            {isSelected && (
-                                <div className="border-t p-2 bg-gray-50/50 rounded-b-lg">
-                                    {dayData.tripPlaces.length > 0 ? (
-                                        // orderInDay 순서대로 정렬하여 표시
-                                        dayData.tripPlaces
-                                            .sort((a, b) => a.orderInDay - b.orderInDay)
-                                            .map((place) => {
-                                                const isFocused = focusedPlace?.tripPlaceId === place.tripPlaceId;
-                                                return (
-                                                    <div
-                                                        key={place.tripPlaceId}
-                                                        className={`p-3 my-1 transition rounded-md cursor-pointer ${isFocused
-                                                            ? 'bg-blue-100 ring-2 ring-blue-400 shadow'
-                                                            : 'bg-white hover:bg-blue-50 hover:shadow-sm shadow-xs'
-                                                            }`}
-                                                        onClick={() => setFocusedPlace(place)}
-                                                    >
-                                                        <div className="flex items-start gap-3">
-                                                            {/* 순서 번호 배지 */}
-                                                            <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center mt-1">
-                                                                {place.orderInDay}
-                                                            </div>
-                                                            <div className="flex-1">
-                                                                {/* 장소 이름 */}
-                                                                <p className="font-semibold text-gray-800">{place.placeName}</p>
-                                                                {/* 방문 시간 */}
-                                                                {place.visitTime && (
-                                                                    <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
-                                                                        <FaRegClock />
-                                                                        <span>{place.visitTime}</span>
-                                                                    </div>
-                                                                )}
-                                                                {/* 메모 */}
-                                                                {place.memo && (
-                                                                    <div className="mt-1.5 flex items-start gap-2 text-xs text-gray-600 bg-gray-100 p-2 rounded">
-                                                                        <FaRegCommentDots className="mt-0.5 flex-shrink-0" />
-                                                                        <p className="whitespace-pre-wrap break-words">{place.memo}</p>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })
-                                    ) : (
-                                        // 장소가 없을 때 UI
-                                        <div className="text-center p-4 text-sm text-gray-500">
-                                            계획된 장소가 없습니다.
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-        </aside>
-    );
-};
+import TripPlanSidebar from '../../components/trips/TripPlanSidebar';
+import TripPlanCopyModal from '../../components/trips/TripPlanCopyModal';
+import TripPlanMemberModal from '../../components/trips/TripPlanMemberModal';
+import { FaDownload, FaUser } from 'react-icons/fa';
 
 export default function TripPlanView() {
+    const { user } = useAuth();
     const { tripId } = useParams<{ tripId: string }>();
     const navi = useNavigate();
 
@@ -184,9 +18,12 @@ export default function TripPlanView() {
     const [isUpdating, setIsUpdating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [trip, setTrip] = useState<TripDTO | null>(null);
+    const [isOwner, setIsOwner] = useState(false);
 
     const [selectedDay, setSelectedDay] = useState(1);
     const [focusedPlace, setFocusedPlace] = useState<TripPlaceDTO | undefined>(undefined);
+    const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+    const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
 
     useEffect(() => {
         if (!tripId) {
@@ -199,10 +36,20 @@ export default function TripPlanView() {
             setError(null);
             try {
                 const response = await fetch(`${PLAN_URL}/trip/plan/${tripId}`, { credentials: 'include' });
+
+                if (response.status === 403) {
+                    throw new Error("이 여행을 볼 권한이 없습니다.");
+                }
                 if (!response.ok) {
                     throw new Error('여행 정보를 불러오는 데 실패했습니다.');
                 }
                 const data: TripDTO = await response.json();
+
+                if (user && data.ownerId === user.userId) {
+                    setIsOwner(true);
+                } else {
+                    setIsOwner(false);
+                }
 
                 setTrip(data);
             } catch (err) {
@@ -213,7 +60,7 @@ export default function TripPlanView() {
         };
 
         fetchTrip();
-    }, [tripId, navi]);
+    }, [tripId, navi, user]);
 
     useEffect(() => {
 
@@ -250,43 +97,36 @@ export default function TripPlanView() {
         }
     };
 
-    // 2. 여행 전체의 공개 상태를 변경하는 핸들러
     const handleToggleTripPublic = async () => {
         if (!trip || isUpdating) return;
 
-        const originalTrip = trip; // API 실패 시 복원을 위해 원본 저장
+        const originalTrip = trip;
         const newIsPublic = !trip.isPublic;
 
-        // 낙관적 UI 업데이트: UI를 먼저 변경
         const newTrip: TripDTO = {
             ...trip,
             isPublic: newIsPublic,
-            // 전체 토글 시 모든 날짜의 상태도 함께 변경
             tripDays: trip.tripDays.map(day => ({ ...day, isPublic: newIsPublic })),
         };
         setTrip(newTrip);
 
-        // API 호출
         const allDayIds = trip.tripDays.map(day => day.tripDayId);
         const success = await updateShareStatus(allDayIds, newIsPublic);
 
-        // API 호출 실패 시, 원래 상태로 롤백
         if (!success) {
             setTrip(originalTrip);
         }
     };
 
-    // 3. 특정 날짜의 공개 상태를 변경하는 핸들러
     const handleToggleDayPublic = async (tripDayId: string) => {
         if (!trip || isUpdating) return;
 
-        const originalTrip = trip; // API 실패 시 복원을 위해 원본 저장
+        const originalTrip = trip;
         const dayToUpdate = trip.tripDays.find(d => d.tripDayId === tripDayId);
         if (!dayToUpdate) return;
 
         const newIsPublic = !dayToUpdate.isPublic;
 
-        // 낙관적 UI 업데이트
         const newTrip: TripDTO = {
             ...trip,
             tripDays: trip.tripDays.map(day =>
@@ -295,10 +135,8 @@ export default function TripPlanView() {
         };
         setTrip(newTrip);
 
-        // API 호출
         const success = await updateShareStatus([tripDayId], newIsPublic);
 
-        // API 호출 실패 시, 원래 상태로 롤백
         if (!success) {
             setTrip(originalTrip);
         }
@@ -317,11 +155,11 @@ export default function TripPlanView() {
             <main className="flex flex-1 overflow-hidden">
                 <TripPlanSidebar
                     trip={trip}
+                    isOwner={isOwner}
                     selectedDay={selectedDay}
                     setSelectedDay={setSelectedDay}
                     focusedPlace={focusedPlace}
                     setFocusedPlace={setFocusedPlace}
-                    // 상태 객체와 핸들러 함수를 props로 전달
                     isUpdating={isUpdating}
                     onToggleTripPublic={handleToggleTripPublic}
                     onToggleDayPublic={handleToggleDayPublic}
@@ -333,8 +171,43 @@ export default function TripPlanView() {
                         focusedPlace={focusedPlace}
                         setFocusedPlace={setFocusedPlace}
                     />
+
+                    {isOwner && trip && (
+                        <button
+                            onClick={() => setIsMembersModalOpen(true)}
+                            className="absolute top-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-50 flex items-center gap-2 z-10"
+                        >
+                            <FaUser />
+                            <span>멤버 관리</span>
+                        </button>
+                    )}
+
+                    {!isOwner && trip && (
+                        <button
+                            onClick={() => setIsCopyModalOpen(true)}
+                            className="absolute bottom-6 right-6 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg hover:bg-blue-700 flex items-center gap-2 z-10"
+                        >
+                            <FaDownload />
+                            <span className="font-semibold">내 일정으로 가져오기</span>
+                        </button>
+                    )}
                 </div>
             </main>
+
+            {trip && (
+                <>
+                    <TripPlanCopyModal
+                        isOpen={isCopyModalOpen}
+                        onClose={() => setIsCopyModalOpen(false)}
+                        tripToCopy={trip}
+                    />
+                    <TripPlanMemberModal
+                        isOpen={isMembersModalOpen}
+                        onClose={() => setIsMembersModalOpen(false)}
+                        currentTrip={trip}
+                    />
+                </>
+            )}
         </div>
     );
 }

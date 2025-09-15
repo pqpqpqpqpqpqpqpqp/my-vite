@@ -1,4 +1,5 @@
 export interface TripDTO {
+    ownerId: string;
     tripId: string;
     tripTitle: string;
     startDate: string;
