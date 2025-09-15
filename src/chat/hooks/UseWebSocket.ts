@@ -74,36 +74,16 @@ export const useWebSocket = (chatId: string | null, isLoggedIn: boolean) => {
   }, [chatId, isLoggedIn]);
 
 
-  const sendMessage = useCallback((content: string) => {
-    if(clientRef.current && isConnected) {
-      if (PING_TEST) {
-        clientRef.current.publish({
-          destination: "/pub/__ping",
-          body: JSON.stringify({test: "ping", ts: Date.now(), content})
-        });
-        return;
-      }
+   const sendMessage = useCallback((content: string) => {
 
-
-      if(chatId) {
-        const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
-        clientRef.current.publish({
-          destination: publishPath,
-          body: JSON.stringify({ content }),
-        });
-      }
+    if (clientRef.current && isConnected && chatId) {
+      const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
+      clientRef.current.publish({
+        destination: publishPath,
+        body: JSON.stringify({content}),
+      });
     }
-  }, [isConnected, chatId]
-);
-    
-  //   if (clientRef.current && isConnected && chatId) {
-  //     const publishPath = PUBLISH_URL.replace("{chatId}", chatId);
-  //     clientRef.current.publish({
-  //       destination: publishPath,
-  //       body: JSON.stringify({content}),
-  //     });
-  //   }
-  // }, [isConnected, chatId]);
+  }, [isConnected, chatId]);
 
   // 6) 외부에서 메세지 목록을 초기화할 수 있는 함수
   const setInitialMessages = (initialMessages: MessageDTO[]) => {
