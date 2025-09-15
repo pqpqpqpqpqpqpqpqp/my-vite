@@ -1,3 +1,5 @@
+export type DomainType = 'MATE' | 'TRIP';
+
 export interface UserDTO {
     userId : string;
     nickname : string;
@@ -14,6 +16,71 @@ export interface MessageDTO {
     unreadUsers : UserDTO[];
 }
 
+
+// =======================================================
+// 목록 DTO 매핑
+export interface BaseRoomListItem {
+    chatId : string;
+    createdAt : string;
+    lastMsg : string;
+    lastMsgSentAt : string | null;
+    unreadCount : number;
+    membercount : number;
+    nicknames : string[];
+}
+
+export interface MateRoomListItem extends BaseRoomListItem {
+    domain : 'MATE';
+    postId : string;
+    postTitle : string;
+}
+
+export interface TripRoomListItem extends BaseRoomListItem {
+    domain : 'TRIP';
+    tripId : string;
+    tripTitle : string;
+}
+
+export type RoomListItem = MateRoomListItem | TripRoomListItem;
+
+
+// =======================================================
+// 상세 DTO 매핑
+export interface MateRoomDetail {
+    domain: 'MATE';
+    chatId : string;
+    postId : string;
+    postTitle : string;
+    participantCount: number;
+    participantNicknames : string[];
+    messages : MessageDTO[];
+}
+
+export interface TripRoomDetail {
+    domain: 'TRIP';
+    chatId : string;
+    tripId : string;
+    tripTitle : string;
+    participantCount: number;
+    participantNicknames : string[];
+    messages : MessageDTO[];
+}
+
+export type RoomDetail = MateRoomDetail | TripRoomDetail;
+
+
+// =======================================================
+// 요청 DTO 매핑
+export interface MarkRoomReadReq {
+    chatId : string;
+}
+
+export interface SendMessageReq {
+    chatId : string;
+    content : string;
+}
+
+
 export interface MateChatDetailDTO {
     chatId : string;
     postId : string;
@@ -27,7 +94,7 @@ export interface MateChatListDTO {
     postId : string;
     createdAt : string;
     postTitle : string;
-    membercount : number;
+    memberCount : number;
     nicknames : string[];
     lastMsg : string;
     lastMsgSentAt : string | null;
