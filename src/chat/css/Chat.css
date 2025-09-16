@@ -1,73 +1,151 @@
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 600px;
-  width: 400px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  overflow: hidden;
+/* src/styles/chat.css */
+
+/* 레이아웃 */
+.chat-page {
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+  background: #f5f6f7;
 }
 
-.message-list {
-  flex-grow: 1;
+/* 상단 탭 */
+.chat-tabs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+.chat-tab {
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #111827;
+}
+.chat-tab.active {
+  background: #111827;
+  color: #fff;
+}
+.chat-tabs-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.muted { color: #6b7280; font-size: 12px; }
+
+/* 좌우 영역 */
+.chat-body {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: 100%;
+}
+
+/* 목록(좌측) */
+.chat-list {
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
   overflow-y: auto;
-  padding: 10px;
+}
+.chat-list .pad { padding: 16px; }
+.chat-list .text-danger { color: crimson; }
+.chat-list-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  background: #fff;
+}
+.chat-list-item.active {
+  background: #f0f9ff;
+}
+.chat-list-item .title { font-weight: 700; }
+.chat-list-item .sub { font-size: 12px; }
+.badge-wrap { display: flex; align-items: center; }
+.badge-danger {
+  min-width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #EF4444;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  padding: 0 6px;
+}
+
+/* 우측(상세) */
+.chat-room-col { display: grid; grid-template-rows: 56px 1fr; height: 100%; }
+.chat-room-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* 대화 영역 */
+.chat-room { display: grid; grid-template-rows: 1fr 64px; height: 100%; }
+.chat-messages {
+  padding: 16px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
+.text-danger { color: crimson; }
 
-.message-item {
-  display: flex;
-  margin-bottom: 10px;
+/* iMessage 톤의 말풍선 */
+.bubble-row { display: flex; flex-direction: column; max-width: 80%; }
+.bubble-row.mine { align-self: flex-end; }
+.bubble-row.other { align-self: flex-start; }
+
+.bubble {
   max-width: 70%;
-}
-
-.message-item.mine {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.message-bubble {
-  padding: 8px 12px;
+  padding: 10px 12px;
   border-radius: 18px;
-  word-wrap: break-word;
+  line-height: 1.35;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.06);
+  word-break: break-word;
 }
+.bubble.mine { background: #0B93F6; color: #fff; }
+.bubble.other { background: #E5E5EA; color: #000; }
 
-.message-item.mine .message-bubble {
-  background-color: #007bff;
-  color: white;
+.meta { font-size: 11px; color: #6b7280; margin-top: 4px; }
+
+/* 입력 바 */
+.chat-input {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px;
+  background: #fff;
+  border-top: 1px solid #e5e7eb;
 }
-
-.message-item.others .message-bubble {
-  background-color: #f1f0f0;
-  color: black;
+.chat-input input {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
 }
-
-.sender-info {
-  font-size: 0.8em;
-  color: #555;
-  margin: 0 8px;
-}
-
-.message-input-container {
-  display: flex;
-  padding: 10px;
-  border-top: 1px solid #ccc;
-}
-
-.message-input {
-  flex-grow: 1;
-  border: 1px solid #ccc;
-  border-radius: 18px;
-  padding: 8px 12px;
-  margin-right: 10px;
-}
-
-.send-button {
+.chat-input button {
+  padding: 0 16px;
+  border-radius: 12px;
   border: none;
-  background-color: #007bff;
-  color: white;
-  border-radius: 18px;
-  padding: 8px 16px;
+  background: #111827;
+  color: #fff;
+  font-weight: 700;
   cursor: pointer;
 }
+.chat-input button:disabled { opacity: .6; cursor: not-allowed; }
+
+/* 연결 상태 표시(선택) */
+.chat-conn { padding: 4px 12px; font-size: 12px; }

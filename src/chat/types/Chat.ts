@@ -25,7 +25,7 @@ export interface BaseRoomListItem {
     lastMsg : string;
     lastMsgSentAt : string | null;
     unreadCount : number;
-    membercount : number;
+    memberCount : number;
     nicknames : string[];
 }
 
@@ -81,23 +81,23 @@ export interface SendMessageReq {
 }
 
 
-export interface MateChatDetailDTO {
-    chatId : string;
-    postId : string;
-    postTitle : string;
-    members : UserDTO[];
-    messages : MessageDTO[];
-}
+// export interface MateChatDetailDTO {
+//     chatId : string;
+//     postId : string;
+//     postTitle : string;
+//     members : UserDTO[];
+//     messages : MessageDTO[];
+// }
 
-export interface MateChatListDTO {
-    chatId : string;
-    postId : string;
-    createdAt : string;
-    postTitle : string;
-    memberCount : number;
-    nicknames : string[];
-    lastMsg : string;
-    lastMsgSentAt : string | null;
-    unreadCount : number;
+// export interface MateChatListDTO {
+//     chatId : string;
+//     postId : string;
+//     createdAt : string;
+//     postTitle : string;
+//     memberCount : number;
+//     nicknames : string[];
+//     lastMsg : string;
+//     lastMsgSentAt : string | null;
+//     unreadCount : number;
 
-}
+// }
