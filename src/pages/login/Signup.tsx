@@ -137,7 +137,7 @@ export default function Signup() {
                         */}
                         <div>
                             <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">이름</label>
-                            <input id="name" name="name" type="text" required value={formData.name} onChange={handleInputChange} placeholder="홍길동" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm" />
+                            <input id="name" name="name" type="text" required value={formData.name} onChange={handleInputChange} placeholder="이름을 입력해주세요" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm" />
                         </div>
 
                         <div>
