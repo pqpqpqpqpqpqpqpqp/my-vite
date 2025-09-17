@@ -73,6 +73,7 @@ export type RoomDetail = MateRoomDetail | TripRoomDetail;
 // 요청 DTO 매핑
 export interface MarkRoomReadReq {
     chatId : string;
+    messageIds : number[];  // 읽음 처리할 메시지 ID 목록   
 }
 
 export interface SendMessageReq {

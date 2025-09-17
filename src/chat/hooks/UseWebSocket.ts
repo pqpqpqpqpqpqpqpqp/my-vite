@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { Stomp, CompatClient } from "@stomp/stompjs";
+import { useEffect, useState, useRef, useCallback, use } from "react";
+import { Client, type IMessage, type StompSubscription } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
 import type {DomainType ,MessageDTO } from "../types/Chat";
 import { markRoomAsRead, sendMessage as apiSendMessage } from "../api/ChatApi";
@@ -36,6 +36,7 @@ function buildDestinations(domain: 'MATE'|'TRIP', chatId: string) {
 
 
 // ----------------------------------------------------
+// 타입
 type UseChatSocketArgs = {
   domain: DomainType;            
   chatId: string;                
@@ -55,6 +56,8 @@ type UseChatSocketReturn = {
 };
 
 
+// ----------------------------------------------------
+// 훅
 export function useChatSocket({
   domain,
   chatId,
@@ -66,140 +69,205 @@ export function useChatSocket({
   maxRetries = 5,
 }: UseChatSocketArgs): UseChatSocketReturn {
 
-  const stompRef = useRef<any | null>(null);
-  const subRef = useRef<any | null>(null);
+  const clientRef = useRef<Client | null>(null);
+  const subRef = useRef<StompSubscription | null>(null);
   const timerRef = useRef<number | null>(null);
-  const retryRef = useRef<number>(0);
+  
   const [connected, setConnected] = useState(false);
 
-  const { sendDest, subDest } = buildDestinations(domain, chatId);
+  // const { sendDest, subDest } = buildDestinations(domain, chatId);
+  
+  
+  // ----------------------------------------------------
+  // 콜백 함수 ref 관리
+  const onReceiveRef = useRef(onReceive);
+  useEffect(() => { onReceiveRef.current = onReceive; }, [onReceive]);
+  
+  const onConnectedRef = useRef(onConnected);
+  useEffect(() => { onConnectedRef.current = onConnected; }, [onConnected]);
+
+  const onDisconnectedRef = useRef(onDisconnected);
+  useEffect(() => { onDisconnectedRef.current = onDisconnected; }, [onDisconnected]);
 
   
+  // ----------------------------------------------------
   // 읽음 처리
   const scheduleMarkRead = useCallback(() => {
     if (timerRef.current) window.clearTimeout(timerRef.current);
     timerRef.current = window.setTimeout( async () => {
       try {
-        await markRoomAsRead(domain, { chatId });
-      } catch {
-
-      }
+        await markRoomAsRead(domain, { chatId, messageIds: [] });
+      } catch {}
     }, debounceReadMs) as unknown as number;
   }, [domain, chatId, debounceReadMs]);
 
 
-  // 연결
-  const connect = useCallback( () => {
-    if(!enabled || !chatId) return;
+  // // ----------------------------------------------------
+  // // 연결
 
-    try{
-      // 1) SockJS 인스턴스 생성
-      const sock = new SockJS(toSockJSUrl(WS_URL), null, {
-        transports: ['websocket'],
-      });
+  // const onReceiveRef = useRef(onReceive);
+  // useEffect( () => { onReceiveRef.current = onReceive;}, [onReceive]);
 
-      // 2) STOMP 클라이언트 생성
-      const client : CompatClient = Stomp.over(sock as any);
-      client.debug = () => {};
+  // const connect = useCallback( () => {
+  //   if(!enabled || !chatId) return;
 
-      // 3) STOMP 연결 시도
-      client.connect(
-        {},
-        () => {
-          // 연결 성공
-          setConnected(true);
-          retryRef.current = 0;
-          onConnected?.();
+  //   (async () => {
+  //     try {await clientRef.current?.deactivate?.();} catch{}
+  //     clientRef.current = null;
+  //     try {await subRef.current?.unsubscribe?.();} catch{}
+  //     subRef.current = null;
 
-          // 구독 설정
-          subRef.current = client.subscribe(subDest, (frame: any) => {
-            try{
-              const msg: MessageDTO = JSON.parse(frame.body);
-              onReceive(msg);
-              scheduleMarkRead();
-            } catch {
+  //     const client = new Client( {
+  //       webSocketFactory: () => new SockJS(toSockJSUrl(WS_URL)),
 
-            }
-        });
+  //       reconnectDelay: 5000,
+  //       heartbeatIncoming: 10000,
+  //       heartbeatOutgoing: 10000,
 
-        scheduleMarkRead();
-      },
-      () => {}
-    );
+  //       // 디버그 로그 끔
+  //       debug: () => {},
 
-    // 5) Socket close 이벤트 처리
-    sock.onclose = () => {
-      setConnected(false);
-      onDisconnected?.();
+  //        // 연결 성공 시
+  //       onConnect: () => {
+  //         setConnected(true);
+  //         onConnected?.();
+  //         subRef.current = client.subscribe(subDest, (frame) => {
 
-      try{ subRef.current?.unsubscribe?.();} catch {}
-      subRef.current = null;
+  //           try{
+  //             const msg: MessageDTO = JSON.parse(frame.body);
+  //             onReceive(msg);;
+  //             scheduleMarkRead();
+  //           } catch {}
+  //       });
 
-      const retry = ++retryRef.current;
-      if(retry <= maxRetries) {
-        const wait = Math.min(15000, 500 * Math.pow(2, retry));
-        setTimeout(connect, wait);
-      }
-    };
+  //       // 입장 시 읽음 처리 예약
+  //       scheduleMarkRead();
+  //     },
 
-    stompRef.current = client;
-    } catch {
-      const retry = ++retryRef.current;
-      if (retry <= maxRetries) {
-        const wait = Math.min(15000, 500 * Math.pow(2, retry));
-        setTimeout(connect, wait);
-      }
-    }
-  }, [enabled, chatId, subDest, onConnected, onDisconnected, onReceive, scheduleMarkRead, maxRetries]);
+  //     onWebSocketClose: () => {
+  //       setConnected(false);
+  //       onDisconnected?.();
+  //       try {
+  //         subRef.current?.unsubscribe?.();
+  //       } catch {}
+  //       subRef.current = null;
+  //     },
+  //     onStompError: () => {}
+  //   });
+
+  //   clientRef.current = client;
+  //   client.activate();
+
+  // }) ();
+  // }, [enabled, chatId, onConnected, onDisconnected, onReceive, subDest, scheduleMarkRead]);
 
 
+  // ----------------------------------------------------
   // 라이프 사이클
   useEffect( () => {
-    if(!enabled) return;
-    connect();
+    if(!enabled || !chatId) {
+      clientRef.current?.deactivate?.();
+      return;
+    }
+
+    // 중복 실행 방지
+    if(clientRef.current) {
+      return;
+    }
+
+    const {subDest} = buildDestinations(domain, chatId);
+
+    const client = new Client({
+      webSocketFactory: () => new SockJS(toSockJSUrl(WS_URL)),
+      reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      debug: () => {},
+      onConnect: () => {
+        setConnected(true);
+        onConnectedRef.current?.(); // ref를 통해 최신 콜백 실행
+
+        subRef.current = client.subscribe(subDest, (frame) => {
+          try {
+            const msg: MessageDTO = JSON.parse(frame.body);
+            onReceiveRef.current(msg); // ref를 통해 최신 콜백 실행
+            scheduleMarkRead();
+          } catch {}
+        });
+        scheduleMarkRead();
+      },
+      onWebSocketClose: () => {
+        setConnected(false);
+        onDisconnectedRef.current?.(); // ref를 통해 최신 콜백 실행
+        subRef.current = null;
+      },
+      onStompError: () => { /* 에러 처리 */ }
+    });
+
+    clientRef.current = client;
+    client.activate();
+
+    // Cleanup 함수
     return () => {
       if(timerRef.current) window.clearTimeout(timerRef.current);
-      try{ subRef.current?.unsubscribe?.();} catch {}
+      client.deactivate();
+      clientRef.current = null;
       subRef.current = null;
-      try{ stompRef.current?.deactivate?.(); } catch {}
-      stompRef.current = null;
       setConnected(false);
     };
-  }, [enabled,connect]);
+  }, [enabled, domain, chatId, scheduleMarkRead]);
 
-
+  // ----------------------------------------------------
   // 메세지 전송
   const sendMessage = useCallback(
     async (content: string) => {
       const payload = { chatId, content };
-      try {
-        if (stompRef.current && connected) {
-          // STOMP SEND
-          stompRef.current.send(sendDest, {}, JSON.stringify(payload));
-        } else {
-          // REST 폴백
+      // connected 상태를 직접 참조하여 안정성 향상
+      if (clientRef.current?.active) {
+        try {
+          const { sendDest } = buildDestinations(domain, chatId);
+          clientRef.current.publish({
+            destination: sendDest,
+            body: JSON.stringify(payload),
+          });
+          scheduleMarkRead();
+        } catch (error) {
+          // 웹소켓 전송 실패 시 REST 폴백
           await apiSendMessage(payload);
+          scheduleMarkRead();
         }
-        // 전송 직후 내가 읽은 것으로 가정 → 읽음 처리 예약
-        scheduleMarkRead();
-      } catch {
-        // 마지막 폴백
+      } else {
+        // 연결 안되었을 때 REST 폴백
         await apiSendMessage(payload);
         scheduleMarkRead();
       }
     },
-    [chatId, sendDest, connected, scheduleMarkRead]
+    [domain, chatId, scheduleMarkRead]
   );
 
   const disconnect = useCallback(() => {
-    if (timerRef.current) window.clearTimeout(timerRef.current);
-    try { subRef.current?.unsubscribe?.(); } catch {}
-    subRef.current = null;
-    try { stompRef.current?.deactivate?.(); } catch {}
-    stompRef.current = null;
-    setConnected(false);
+    clientRef.current?.deactivate();
   }, []);
 
-  // 객체 반환
   return { connected, sendMessage, disconnect };
 }
+
+
+//   // ----------------------------------------------------
+//   // 연결 해제
+//   const disconnect = useCallback(() => {
+//     if (timerRef.current) window.clearTimeout(timerRef.current);
+//     try { 
+//       subRef.current?.unsubscribe?.(); 
+//     } catch {}
+//       subRef.current = null;
+//     try { 
+//       clientRef.current?.deactivate?.(); 
+//     } catch {}
+//       clientRef.current = null;
+//       setConnected(false);
+//   }, []);
+
+//   // 객체 반환
+//   return { connected, sendMessage, disconnect };
+// }

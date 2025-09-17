@@ -149,7 +149,7 @@ export async function markRoomAsRead(domain: DomainType, payload: MarkRoomReadRe
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({messageIds: payload.messageIds}),
     });
     if(!res.ok) throw new Error('채팅방 읽음 처리에 실패했습니다.');
 }
