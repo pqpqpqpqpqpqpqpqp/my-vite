@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import TripPlanMap from '../../components/trips/TripPlanMap';
 import type { TripDTO, TripPlaceDTO } from '../../types/trip';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,7 +7,7 @@ import { PLAN_URL } from '../../config';
 import TripPlanSidebar from '../../components/trips/TripPlanSidebar';
 import TripPlanCopyModal from '../../components/trips/TripPlanCopyModal';
 import TripPlanMemberModal from '../../components/trips/TripPlanMemberModal';
-import { FaDownload, FaUser } from 'react-icons/fa';
+import { FaDownload, FaUser, FaUserCog } from 'react-icons/fa';
 
 export default function TripPlanView() {
     const { user } = useAuth();
@@ -179,6 +179,15 @@ export default function TripPlanView() {
                         >
                             <FaUser />
                             <span>멤버 관리</span>
+
+                            <Link
+                                to="/mate/post/new"
+                                state={{ sourceTripId: trip.tripId }} // [중요] tripId를 다음 페이지로 전달
+                                className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 flex items-center gap-2"
+                            >
+                                <FaUserCog />
+                                <span>동행 구하기</span>
+                            </Link>
                         </button>
                     )}
 

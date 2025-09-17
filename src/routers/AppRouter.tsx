@@ -6,6 +6,9 @@ import TripPlanSelect from "../pages/trip/make/TripPlanSelect"
 import TripPlanSchedule from "../pages/trip/make/TripPlanSchedule"
 import TripPlanDetail from "../pages/trip/make/TripPlanDetail"
 import TripPlanList from '../pages/trip/TripPlanList'
+import MateBoard from '../pages/mate/MateBoard'
+import MatePostDetail from '../pages/mate/MatePostDetail';
+import MatePostEditor from '../pages/mate/MatePostEditor'
 import Profile from '../pages/user/Profile'
 import PrivateRoute from './PrivateRouter'
 
@@ -44,6 +47,18 @@ export default function AppRouter() {
                     <PrivateRoute>
                         <TripPlanDetail />
                     </PrivateRoute>
+                } />
+                <Route path="/mate/board" element={
+                    <PrivateRoute><MateBoard /></PrivateRoute>
+                } />
+                <Route path="/mate/post/new" element={
+                    <PrivateRoute><MatePostEditor /></PrivateRoute>
+                } />
+                <Route path="/mate/post/edit/:postId" element={
+                    <PrivateRoute><MatePostEditor /></PrivateRoute>
+                } />
+                <Route path="/mate/post/:postId" element={
+                    <PrivateRoute><MatePostDetail /></PrivateRoute>
                 } />
                 <Route path="/user/profile" element={
                     <PrivateRoute>
