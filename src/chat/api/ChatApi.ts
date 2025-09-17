@@ -142,14 +142,14 @@ export async function fetchRoomDetail(
 export async function markRoomAsRead(domain: DomainType, payload: MarkRoomReadReq) {
     const url =
         domain === 'MATE'
-            ? `${BASE_MATE}/api/mate/chat/${encodeURIComponent(payload.chatId)}/read`
+            ? `${BASE_MATE}/api/mate/chat/msg`
             : `${BASE_TRIP}/trip/chat/${encodeURIComponent(payload.chatId)}/read`;
 
     const res = await fetch(url, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({messageIds: payload.messageIds}),
+        body: JSON.stringify({}),
     });
     if(!res.ok) throw new Error('채팅방 읽음 처리에 실패했습니다.');
 }
