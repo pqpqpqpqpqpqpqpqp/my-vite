@@ -12,10 +12,15 @@ import MatePostEditor from '../pages/mate/MatePostEditor'
 import Profile from '../pages/user/Profile'
 import PrivateRoute from './PrivateRouter'
 
+// chat test
+import ChatPage from '../chat/pages/ChatPage';
+
+
 export default function AppRouter() {
     return (
         <div className="flex-1">
             <Routes>
+                <Route path='/chat' element={<ChatPage />} />
                 <Route path='/' element={<Home />} />
                 <Route path="/trip/plan/board" element={<TripPlanBoard />} />
                 <Route path="/trip/plan/list" element={

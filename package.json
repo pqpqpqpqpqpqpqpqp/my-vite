@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
+    "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "@vis.gl/react-google-maps": "^1.5.4",
+    "axios": "^1.11.0",
     "date-fns": "^4.1.0",
     "react": "^19.1.0",
     "react-day-picker": "^9.8.1",
@@ -21,7 +23,9 @@
     "react-intersection-observer": "^9.16.0",
     "react-router-dom": "^7.7.1",
     "react-spinners": "^0.17.0",
+    "sockjs-client": "^1.6.1",
     "sonner": "^2.0.7",
+    "stompjs": "^2.3.3",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
@@ -29,6 +33,8 @@
     "@types/google.maps": "^3.58.1",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/sockjs-client": "^1.5.4",
+    "@types/stompjs": "^2.3.9",
     "@vitejs/plugin-react": "^4.6.0",
     "eslint": "^9.30.1",
     "eslint-plugin-react-hooks": "^5.2.0",

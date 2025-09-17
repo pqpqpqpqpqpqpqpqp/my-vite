@@ -9,7 +9,7 @@ import type { PlaceSuggestion } from "../../../types/trip";
 import { PLAN_URL } from "../../../config";
 
 import "react-day-picker/dist/style.css";
-import "../../css/calender.css";
+import "../../../css/calender.css";
 
 interface LocationState {
     selectedPlaces: PlaceSuggestion[];
