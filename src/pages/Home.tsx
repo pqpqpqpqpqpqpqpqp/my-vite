@@ -50,7 +50,7 @@ export default function Home() {
                             </div>
                             <h3 className="text-2xl font-semibold mb-3">여행 일정 만들기</h3>
                             <p className="text-gray-600 mb-4">나만의 스타일로, 친구와 함께 자유롭게 계획하세요.</p>
-                            <Link to="/trip/plan/view">
+                            <Link to="/trip/plan/list">
                                 <button className="px-5 py-2 bg-[#B2A5FF] text-white rounded-lg hover:bg-[#8B5DFF] transition-colors">
                                     일정 확인하기
                                 </button>

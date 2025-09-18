@@ -116,7 +116,7 @@ export default function TripPlanSidebar({
                     )}
 
                     <button
-                        onClick={() => navigate('/trip/plan/list')} // 나의 일정 목록 페이지로 이동
+                        onClick={() => navigate(-1)} // 나의 일정 목록 페이지로 이동
                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition"
                     >
                         <FaListUl />

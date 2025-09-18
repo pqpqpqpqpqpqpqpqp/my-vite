@@ -43,7 +43,7 @@ function TripItem({ trip }: TripItemProps) {
     const { startDate, endDate, tripId, tripTitle } = trip
     const status = getTripStatus(startDate, endDate);
 
-    const randomImageId = Math.floor(Math.random() * 1085);
+    const randomImageId = Math.floor(Math.random() * 1074) + 10;
 
     const imageUrl = `https://picsum.photos/id/${randomImageId}/800/600`;
 
