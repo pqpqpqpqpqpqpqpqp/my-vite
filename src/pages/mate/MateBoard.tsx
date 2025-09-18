@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BASE_URL } from '../../config';
+import { MATE_URL } from '../../config';
 import type { MatePostListItem } from '../../types/mate';
 import { FaPlus } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
@@ -29,7 +29,7 @@ export default function MateBoard() {
         const fetchPosts = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`${BASE_URL}/api/mate/posts/list`, {
+                const response = await fetch(`${MATE_URL}/api/mate/posts/list`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ page: 0, size: 20, sortDir: 'desc' }), // 페이징 정보

@@ -2,6 +2,7 @@ import { useState, useEffect, useContext, createContext, useCallback, useMemo } 
 import type { PropsWithChildren } from "react";
 import { toast } from "sonner";
 import { BASE_URL } from '../config';
+import { ClipLoader } from "react-spinners";
 
 export interface User {
     userId: string;
@@ -96,7 +97,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }), [isLoggedIn, user, login, logout, checkAuthStatus]);
 
     if (isLoading) {
-        return <div>Loading...</div>;
+        return (
+            <div className="w-full h-screen flex justify-center items-center bg-white">
+                <ClipLoader color="#3B82F6" size={50} />
+            </div>
+        );
     }
 
     return (

@@ -10,7 +10,6 @@ interface NotificationDropdownProps {
 
 export default function NotificationDropdown({ invitations, setInvitations }: NotificationDropdownProps) {
     const { user } = useAuth();
-    // [제거] 내부 상태 및 useEffect 데이터 페칭 로직을 제거하고 props를 사용합니다.
 
     const handleResponse = async (action: 'accept' | 'reject', inv: Invitation) => {
         if (!user) return;

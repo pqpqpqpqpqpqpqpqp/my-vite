@@ -43,7 +43,7 @@ function TripItem({ trip }: TripItemProps) {
     const { startDate, endDate, tripId, tripTitle } = trip
     const status = getTripStatus(startDate, endDate);
 
-    const randomImageId = Math.floor(Math.random() * 1085);
+    const randomImageId = Math.floor(Math.random() * 1074) + 10;
 
     const imageUrl = `https://picsum.photos/id/${randomImageId}/800/600`;
 
@@ -159,7 +159,7 @@ export default function TripPlanList() {
                     <div className="text-center py-20 px-5">
                         <p className="text-gray-500">아직 등록된 여행이 없어요.</p>
                         <p className="text-gray-500 mb-6">첫 여행을 계획해 보세요!</p>
-                        <Link to="/trip/plan/new" className="inline-block bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
+                        <Link to="/trip/plan/make/select" className="inline-block bg-blue-500 text-white font-semibold px-6 py-3 rounded-lg hover:bg-blue-600 transition-colors">
                             새로운 여행 추가하기
                         </Link>
                     </div>

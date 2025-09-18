@@ -32,42 +32,41 @@ const getTripStatus = (startDate: string, endDate: string) => {
 function TripBoardItem({ trip }: TripBoardItemProps) {
     const { startDate, endDate, tripId, tripTitle, ownerNickname } = trip;
     const status = getTripStatus(startDate, endDate);
-    const imageUrl = `https://source.unsplash.com/random/400x400/?travel,${tripId}`;
+    const randomImageId = Math.floor(Math.random() * 1074) + 10;
+    const imageUrl = `https://picsum.photos/id/${randomImageId}/800/600`;
     const period = `${startDate.replace(/-/g, '.')} - ${endDate.replace(/-/g, '.')}`;
 
     return (
-        <div className="block mb-6">
-            <div className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
-                {/* 이미지 영역 */}
-                <div
-                    className={`h-48 bg-cover bg-center relative ${status.isCompleted ? 'filter grayscale' : ''}`}
-                    style={{ backgroundImage: `url(${imageUrl})` }}
-                >
-                    <div className={`absolute top-3 left-3 px-3 py-1 text-sm font-semibold rounded-full ${status.style}`}>
-                        {status.text}
-                    </div>
+        <div className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
+            {/* 이미지 영역 */}
+            <div
+                className={`h-48 bg-cover bg-center relative ${status.isCompleted ? 'filter grayscale' : ''}`}
+                style={{ backgroundImage: `url(${imageUrl})` }}
+            >
+                <div className={`absolute top-3 left-3 px-3 py-1 text-sm font-semibold rounded-full ${status.style}`}>
+                    {status.text}
+                </div>
+            </div>
+
+            {/* 정보 영역 */}
+            <div className="p-4">
+                <h3 className="text-xl font-bold text-gray-800 truncate">{tripTitle}</h3>
+                <p className="text-sm text-gray-500 mt-1">{period}</p>
+
+                {/* 작성자 닉네임 표시 (새로 추가된 부분) */}
+                <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
+                    <FaRegUserCircle />
+                    <span>{ownerNickname}</span>
                 </div>
 
-                {/* 정보 영역 */}
-                <div className="p-4">
-                    <h3 className="text-xl font-bold text-gray-800 truncate">{tripTitle}</h3>
-                    <p className="text-sm text-gray-500 mt-1">{period}</p>
-
-                    {/* 작성자 닉네임 표시 (새로 추가된 부분) */}
-                    <div className="flex items-center gap-2 mt-3 text-sm text-gray-600">
-                        <FaRegUserCircle />
-                        <span>{ownerNickname}</span>
-                    </div>
-
-                    {/* 버튼 영역 (편집 버튼 제거) */}
-                    <div className="mt-4 flex justify-end">
-                        <Link
-                            to={`/trip/plan/view/${tripId}`}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                            일정 보기
-                        </Link>
-                    </div>
+                {/* 버튼 영역 (편집 버튼 제거) */}
+                <div className="mt-4 flex justify-end">
+                    <Link
+                        to={`/trip/plan/view/${tripId}`}
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    >
+                        일정 보기
+                    </Link>
                 </div>
             </div>
         </div>
@@ -143,27 +142,28 @@ export default function TripPlanBoard() {
     }
 
     return (
-        <div className="max-w-xl mx-auto min-h-screen bg-gray-50">
-            {/* 헤더 (게시판용으로 수정) */}
+        // [수정] max-w-xl을 max-w-6xl로 변경하여 그리드 레이아웃을 위한 충분한 너비 확보
+        <div className="max-w-6xl mx-auto min-h-screen bg-gray-50">
             <header className="sticky top-0 bg-white/80 backdrop-blur-sm z-10 flex justify-between items-center p-5 border-b border-gray-200">
                 <h1 className="text-2xl font-bold text-gray-800">여행 둘러보기</h1>
             </header>
 
-            {/* 여행 목록 */}
-            <main className="p-5">
+            {/* [수정] main 태그에 grid 클래스를 적용하여 레이아웃을 변경합니다. */}
+            <main className="p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {trips.length > 0 ? (
                     trips.map(trip => (
                         <TripBoardItem key={trip.tripId} trip={trip} />
                     ))
                 ) : (
-                    <div className="text-center py-20 px-5">
+                    // [수정] 게시물이 없을 때 메시지가 그리드 전체를 차지하도록 col-span-full 추가
+                    <div className="text-center py-20 px-5 sm:col-span-2 lg:col-span-3">
                         <p className="text-gray-500">아직 공개된 여행이 없어요.</p>
                     </div>
                 )}
 
-                {/* 더 보기 버튼 및 로딩 스피너 */}
+                {/* [수정] 더 보기 버튼이 그리드 전체를 차지하도록 컨테이너에 col-span-full 추가 */}
                 {hasMore && (
-                    <div className="flex justify-center mt-4">
+                    <div className="flex justify-center mt-4 sm:col-span-2 lg:col-span-3">
                         <button
                             onClick={handleLoadMore}
                             disabled={isFetchingMore}
