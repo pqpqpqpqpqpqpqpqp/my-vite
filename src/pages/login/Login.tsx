@@ -54,7 +54,7 @@ export default function Login() {
                                 required
                                 value={userEmail}
                                 onChange={(e) => setUserEmail(e.target.value)}
-                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm"
                                 placeholder="이메일 주소"
                             />
                         </div>
@@ -67,7 +67,7 @@ export default function Login() {
                                 required
                                 value={userPw}
                                 onChange={(e) => setUserPw(e.target.value)}
-                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm"
                                 placeholder="비밀번호"
                             />
                             <button
@@ -84,7 +84,7 @@ export default function Login() {
                         <button
                             type="submit"
                             disabled={!isFormValid || isLoading}
-                            className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed"
+                            className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-[#799EFF] border border-transparent rounded-md group hover:bg-[#4E71FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#799EFF] disabled:bg-[#9EC6F3] disabled:cursor-not-allowed"
                         >
                             {isLoading ? '로그인 중...' : '로그인'}
                         </button>
@@ -107,7 +107,7 @@ export default function Login() {
                 </div>
 
                 <p className="mt-6 text-sm text-center">
-                    <Link to="/sign/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+                    <Link to="/sign/signup" className="font-medium text-[#799EFF] hover:text-[#4E71FF]">
                         계정이 없으신가요? 회원가입
                     </Link>
                 </p>

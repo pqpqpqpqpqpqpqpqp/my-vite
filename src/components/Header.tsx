@@ -95,7 +95,9 @@ export default function Header() {
             style={{ backgroundColor: bgColor }}
         >
             <div className="font-bold">
-                <Link to="/">My Application</Link>
+                <Link to="/">
+                    <img src="/modapi.png" alt="modapi_logo" className="h-10 w-auto"></img>
+                </Link>
             </div>
 
             <div className="flex items-center space-x-4">
