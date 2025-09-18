@@ -1,6 +1,7 @@
+import { Link, useNavigate } from 'react-router-dom';
 import type { TripDTO, TripPlaceDTO } from '../../types/trip';
 import { ClipLoader } from 'react-spinners';
-import { FaRegClock, FaRegCommentDots, FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { FaRegClock, FaRegCommentDots, FaChevronDown, FaChevronUp, FaUser, FaUserCog, FaDownload, FaListUl } from "react-icons/fa";
 
 const ToggleSwitch = ({
     isToggled,
@@ -31,6 +32,8 @@ interface TripPlanSidebarProps {
     isUpdating: boolean;
     onToggleTripPublic: () => void;
     onToggleDayPublic: (tripDayId: string) => void;
+    onCopyClick: () => void;
+    onMembersClick: () => void;
 }
 
 export default function TripPlanSidebar({
@@ -42,7 +45,9 @@ export default function TripPlanSidebar({
     setFocusedPlace,
     isUpdating,
     onToggleTripPublic,
-    onToggleDayPublic
+    onToggleDayPublic,
+    onCopyClick,
+    onMembersClick
 }: TripPlanSidebarProps) {
     if (!trip) {
         return (
@@ -53,6 +58,8 @@ export default function TripPlanSidebar({
             </aside>
         );
     }
+
+    const navigate = useNavigate();
 
     const { tripTitle, startDate, endDate, tripDays, isPublic } = trip;
 
@@ -67,17 +74,55 @@ export default function TripPlanSidebar({
                     {startDate ?? ''} ~ {endDate ?? ''}
                 </p>
 
-                {/* 마스터 토글 */}
-                {isOwner && (
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                        <span className="font-semibold text-gray-700">전체 일정 공개</span>
-                        <ToggleSwitch
-                            isToggled={isPublic}
-                            onToggle={onToggleTripPublic}
-                            disabled={isUpdating}
-                        />
-                    </div>
-                )}
+                <div className="mt-4 pt-4 border-t space-y-3">
+                    {isOwner && (
+                        // 소유자 전용 기능들
+                        <>
+                            <div className="flex items-center justify-between">
+                                <span className="font-semibold text-gray-700">전체 일정 공개</span>
+                                <ToggleSwitch
+                                    isToggled={trip?.isPublic ?? false}
+                                    onToggle={onToggleTripPublic}
+                                    disabled={isUpdating}
+                                />
+                            </div>
+                            <button
+                                onClick={onMembersClick}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white text-gray-700 rounded-lg shadow-sm border hover:bg-gray-100 transition"
+                            >
+                                <FaUser />
+                                <span>멤버 관리</span>
+                            </button>
+                            <Link
+                                to="/mate/post/new"
+                                state={{ sourceTripId: trip?.tripId }}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 transition"
+                            >
+                                <FaUserCog />
+                                <span>동행 구하기</span>
+                            </Link>
+                        </>
+                    )}
+
+                    {!isOwner && (
+                        // 뷰어 전용 기능
+                        <button
+                            onClick={onCopyClick}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-sm hover:bg-blue-700 transition"
+                        >
+                            <FaDownload />
+                            <span>내 일정으로 가져오기</span>
+                        </button>
+                    )}
+
+                    <button
+                        onClick={() => navigate('/trip/plan/list')} // 나의 일정 목록 페이지로 이동
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300 transition"
+                    >
+                        <FaListUl />
+                        <span>목록으로 돌아가기</span>
+                    </button>
+                </div>
             </div>
 
             {/* 날짜별 아코디언 메뉴 */}
@@ -139,7 +184,7 @@ export default function TripPlanSidebar({
                                                                 }`}
                                                             onClick={() => setFocusedPlace(place)}
                                                         >
-                                                            <div className="flex items-start gap-3">
+                                                            <div className="flex items-baseline gap-3">
                                                                 <div className="flex-shrink-0 w-6 h-6 bg-blue-500 text-white text-sm font-bold rounded-full flex items-center justify-center mt-1">
                                                                     {place.orderInDay}
                                                                 </div>

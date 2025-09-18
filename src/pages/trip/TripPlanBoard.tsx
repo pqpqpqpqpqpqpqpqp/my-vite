@@ -32,7 +32,8 @@ const getTripStatus = (startDate: string, endDate: string) => {
 function TripBoardItem({ trip }: TripBoardItemProps) {
     const { startDate, endDate, tripId, tripTitle, ownerNickname } = trip;
     const status = getTripStatus(startDate, endDate);
-    const imageUrl = `https://source.unsplash.com/random/400x400/?travel,${tripId}`;
+    const randomImageId = Math.floor(Math.random() * 1085);
+    const imageUrl = `https://picsum.photos/id/${randomImageId}/800/600`;
     const period = `${startDate.replace(/-/g, '.')} - ${endDate.replace(/-/g, '.')}`;
 
     return (

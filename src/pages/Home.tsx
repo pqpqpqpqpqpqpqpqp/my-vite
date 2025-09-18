@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import Footer from "../components/Footer";
 
 // react-icons 라이브러리에서 아이콘들을 가져옵니다.
-import { FaRegCalendarAlt, FaUserFriends, FaSearchLocation } from "react-icons/fa";
+import { FaRegCalendarAlt, FaUserFriends, FaGlobeAsia } from "react-icons/fa";
 
 export default function Home() {
     // 가상의 서비스 이름으로 'xxx'를 대체했습니다.
@@ -22,7 +22,7 @@ export default function Home() {
                     {/* 어두운 오버레이 */}
                     <div className="absolute inset-0 bg-black opacity-35"></div>
                 </div>
-                
+
                 {/* 콘텐츠 */}
                 <div className="relative z-10 p-4">
                     <h1 className="text-5xl md:text-6xl font-bold mb-6 drop-shadow-lg">여행, 이제 {serviceName}와 함께</h1>
@@ -46,11 +46,11 @@ export default function Home() {
                         {/* Feature Card 1: 여행 일정 만들기 */}
                         <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
                             <div className="bg-[#B2A5FF] text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                                <FaRegCalendarAlt className="w-8 h-8"/>
+                                <FaRegCalendarAlt className="w-8 h-8" />
                             </div>
                             <h3 className="text-2xl font-semibold mb-3">여행 일정 만들기</h3>
                             <p className="text-gray-600 mb-4">나만의 스타일로, 친구와 함께 자유롭게 계획하세요.</p>
-                             <Link to="/trip/plan/view">
+                            <Link to="/trip/plan/view">
                                 <button className="px-5 py-2 bg-[#B2A5FF] text-white rounded-lg hover:bg-[#8B5DFF] transition-colors">
                                     일정 확인하기
                                 </button>
@@ -60,7 +60,7 @@ export default function Home() {
                         {/* Feature Card 2: 함께할 여행 메이트 */}
                         <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
                             <div className="bg-[#A7E399] text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                                <FaUserFriends className="w-8 h-8"/>
+                                <FaUserFriends className="w-8 h-8" />
                             </div>
                             <h3 className="text-2xl font-semibold mb-3">함께할 여행 메이트</h3>
                             <p className="text-gray-600 mb-4">새로운 인연과 함께하고, 혜택을 같이 누리세요.</p>
@@ -69,27 +69,32 @@ export default function Home() {
                             </button>
                         </div>
 
-                        {/* Feature Card 3: 숨은 명소 찾기 */}
+                        {/* --- [핵심 수정] Feature Card 3: "숨은 명소 찾기" -> "여행 둘러보기" --- */}
                         <div className="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-shadow duration-300">
+                            {/* 아이콘과 색상 변경 */}
                             <div className="bg-[#FF8383] text-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                                <FaSearchLocation className="w-8 h-8"/>
+                                <FaGlobeAsia className="w-8 h-8" />
                             </div>
-                            <h3 className="text-2xl font-semibold mb-3">숨은 명소 찾기</h3>
-                            <p className="text-gray-600 mb-4">잘 알려지지 않은 특별한 여행지를 만나보세요.</p>
-                            <button className="px-5 py-2 bg-[#FF8383] text-white rounded-lg hover:bg-[#F75270] transition-colors">
-                                명소 찾아보기
-                            </button>
+                            {/* 텍스트 내용 변경 */}
+                            <h3 className="text-2xl font-semibold mb-3">여행 둘러보기</h3>
+                            <p className="text-gray-600 mb-4">다른 여행자들의 멋진 계획을 구경하고, 다음 여행의 영감을 얻어보세요.</p>
+                            {/* 버튼을 Link로 변경하고, 경로와 스타일 수정 */}
+                            <Link to="/trip/plan/board">
+                                <button className="px-5 py-2 bg-[#FF8383] text-white rounded-lg hover:bg-[#F75270] transition-colors">
+                                    모두의 여행 보기
+                                </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
             </section>
-            
+
             {/* CTA Section */}
             <section className="bg-[#9EC6F3] text-white">
                 <div className="container mx-auto px-6 py-20 text-center flex flex-col items-center">
                     <h2 className="text-4xl font-bold mb-4">여행을 떠날 준비, 되셨나요?</h2>
                     <p className="text-lg max-w-lg mb-8">{serviceName}와 함께라면 여행 일정은 자유롭게, 동행은 실속 있게! 지금 바로 나만의 여행을 계획해보세요.</p>
-                     <Link to="/trip/plan/select">
+                    <Link to="/trip/plan/select">
                         <button className="px-8 py-4 bg-white text-[#799EFF] rounded-lg text-lg font-semibold hover:bg-gray-100 transition-transform transform hover:scale-105 shadow-lg">
                             지금 바로 시작하기
                         </button>

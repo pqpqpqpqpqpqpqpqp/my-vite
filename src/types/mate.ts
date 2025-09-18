@@ -2,8 +2,8 @@ export interface MatePostListItem {
     postId: string;
     ownerId: string;
     postTitle: string;
-    startDate: string;   
-    endDate: string;  
+    startDate: string;
+    endDate: string;
     maxMate: number;
     nowMate: number;
     status: 'OPEN' | 'CLOSED';
@@ -18,37 +18,67 @@ export interface MateApplicant {
     status: 'APPLIED' | 'ACCEPTED' | 'REJECTED';
 }
 
-// MatePostDetailRes
-export interface MatePostDetail {
-    postId: string;
-    ownerId: string;
+// CreateMatePostReq
+export interface MatePostCreatePayload {
+    // postId는 백엔드에서 생성되므로 제외
+    placeId?: string; // 장소 ID (선택 사항)
+    placeName?: string; // 장소 이름 (선택 사항)
     postTitle: string;
     content: string;
     startDate: string;
     endDate: string;
+    minMate: number;
     maxMate: number;
-    nowMate: number;
-    status: 'OPEN' | 'CLOSED';
-    applicants: MateApplicant[];
-    // ... 기타 상세 정보 ...
-}
-
-// CreateMatePostReq
-export interface MatePostCreatePayload {
-    title: string;
-    content: string;
-    startDate: string;
-    endDate: string;
-    maxMate: number;
+    deadline: string; // 모집 마감일
+    genders: string[]; // 성별 필터
+    ages: number[]; // 나이대 필터
     tripId?: string; // 원본 여행 계획 ID
 }
 
-// UpdateMatePostReq
 export interface MatePostUpdatePayload {
+    placeId?: string;
+    placeName?: string;
     postTitle: string;
     content: string;
     startDate: string;   
     endDate: string;
+    minMate: number;
     maxMate: number;
-    // ... 기타 수정 가능한 필드 ...
+    deadline: string;
+    status?: 'OPEN' | 'CLOSED'; // 상태도 수정 가능할 수 있음
+    genders: string[]; // 'ANY'는 빈 배열로 변환
+    ages: number[];
+}
+
+// OwnerSumary
+export interface OwnerSummary {
+    ownerId: string;
+    nickname: string;
+    gender: string;
+}
+
+// PlaceSummary
+export interface PlaceSummary {
+    placeId: string;
+    placeName: string;
+}
+
+// MatePostDetailRes
+export interface MatePostDetail {
+    postId: string;
+    postTitle: string;
+    content: string;
+    status: 'OPEN' | 'CLOSED';
+    startDate: string;   
+    endDate: string;
+    minMate: number;
+    maxMate: number;
+    nowMate: number;
+    deadline: string;
+    createdAt: string;
+    genders: string[];
+    ages: number[];
+    owner: OwnerSummary; // [핵심 수정] 중첩된 객체로 변경
+    place: PlaceSummary; // [핵심 수정] 중첩된 객체로 변경
+    applicants: MateApplicant[]; // applicants 필드는 별도로 있다고 가정
 }

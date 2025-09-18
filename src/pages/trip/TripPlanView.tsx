@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import TripPlanMap from '../../components/trips/TripPlanMap';
 import type { TripDTO, TripPlaceDTO } from '../../types/trip';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,7 +7,7 @@ import { PLAN_URL } from '../../config';
 import TripPlanSidebar from '../../components/trips/TripPlanSidebar';
 import TripPlanCopyModal from '../../components/trips/TripPlanCopyModal';
 import TripPlanMemberModal from '../../components/trips/TripPlanMemberModal';
-import { FaDownload, FaUser, FaUserCog } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 export default function TripPlanView() {
     const { user } = useAuth();
@@ -84,61 +84,59 @@ export default function TripPlanView() {
             const response = await fetch(`${PLAN_URL}/trip/share`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tripId: trip.tripId, tripDayIds, isPublic }),
+                body: JSON.stringify({ tripId: trip.tripId, tripDayIds, publicStatus: isPublic }),
                 credentials: 'include',
             });
             if (!response.ok) throw new Error('공개 설정 변경에 실패했습니다.');
             return true;
         } catch (err) {
-            alert((err as Error).message);
+            toast.warning((err as Error).message);
             return false;
         } finally {
+            toast.success('공개 설정이 변경되었습니다.');
             setIsUpdating(false);
         }
     };
 
     const handleToggleTripPublic = async () => {
-        if (!trip || isUpdating) return;
+        if (!trip) return;
 
-        const originalTrip = trip;
         const newIsPublic = !trip.isPublic;
+        const allTripDayIds = trip.tripDays.map(day => day.tripDayId);
 
-        const newTrip: TripDTO = {
-            ...trip,
-            isPublic: newIsPublic,
-            tripDays: trip.tripDays.map(day => ({ ...day, isPublic: newIsPublic })),
-        };
-        setTrip(newTrip);
+        const success = await updateShareStatus(allTripDayIds, newIsPublic);
 
-        const allDayIds = trip.tripDays.map(day => day.tripDayId);
-        const success = await updateShareStatus(allDayIds, newIsPublic);
-
-        if (!success) {
-            setTrip(originalTrip);
+        if (success) {
+            setTrip(prevTrip => {
+                if (!prevTrip) return null;
+                // 전체 여행의 공개 상태와 모든 날짜의 공개 상태를 함께 업데이트
+                const updatedTripDays = prevTrip.tripDays.map(day => ({
+                    ...day,
+                    isPublic: newIsPublic,
+                }));
+                return { ...prevTrip, isPublic: newIsPublic, tripDays: updatedTripDays };
+            });
         }
     };
 
     const handleToggleDayPublic = async (tripDayId: string) => {
-        if (!trip || isUpdating) return;
+        if (!trip) return;
 
-        const originalTrip = trip;
-        const dayToUpdate = trip.tripDays.find(d => d.tripDayId === tripDayId);
+        const dayToUpdate = trip.tripDays.find(day => day.tripDayId === tripDayId);
         if (!dayToUpdate) return;
 
         const newIsPublic = !dayToUpdate.isPublic;
-
-        const newTrip: TripDTO = {
-            ...trip,
-            tripDays: trip.tripDays.map(day =>
-                day.tripDayId === tripDayId ? { ...day, isPublic: newIsPublic } : day
-            ),
-        };
-        setTrip(newTrip);
-
         const success = await updateShareStatus([tripDayId], newIsPublic);
 
-        if (!success) {
-            setTrip(originalTrip);
+        if (success) {
+            setTrip(prevTrip => {
+                if (!prevTrip) return null;
+                // 특정 날짜의 공개 상태만 업데이트
+                const updatedTripDays = prevTrip.tripDays.map(day =>
+                    day.tripDayId === tripDayId ? { ...day, isPublic: newIsPublic } : day
+                );
+                return { ...prevTrip, tripDays: updatedTripDays };
+            });
         }
     };
 
@@ -163,6 +161,8 @@ export default function TripPlanView() {
                     isUpdating={isUpdating}
                     onToggleTripPublic={handleToggleTripPublic}
                     onToggleDayPublic={handleToggleDayPublic}
+                    onCopyClick={() => setIsCopyModalOpen(true)}
+                    onMembersClick={() => setIsMembersModalOpen(true)}
                 />
                 <div className='flex-1 overflow-hidden relative'>
                     <TripPlanMap
@@ -171,35 +171,6 @@ export default function TripPlanView() {
                         focusedPlace={focusedPlace}
                         setFocusedPlace={setFocusedPlace}
                     />
-
-                    {isOwner && trip && (
-                        <button
-                            onClick={() => setIsMembersModalOpen(true)}
-                            className="absolute top-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-50 flex items-center gap-2 z-10"
-                        >
-                            <FaUser />
-                            <span>멤버 관리</span>
-
-                            <Link
-                                to="/mate/post/new"
-                                state={{ sourceTripId: trip.tripId }} // [중요] tripId를 다음 페이지로 전달
-                                className="bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-green-700 flex items-center gap-2"
-                            >
-                                <FaUserCog />
-                                <span>동행 구하기</span>
-                            </Link>
-                        </button>
-                    )}
-
-                    {!isOwner && trip && (
-                        <button
-                            onClick={() => setIsCopyModalOpen(true)}
-                            className="absolute bottom-6 right-6 bg-blue-600 text-white px-5 py-3 rounded-full shadow-lg hover:bg-blue-700 flex items-center gap-2 z-10"
-                        >
-                            <FaDownload />
-                            <span className="font-semibold">내 일정으로 가져오기</span>
-                        </button>
-                    )}
                 </div>
             </main>
 
