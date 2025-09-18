@@ -9,7 +9,7 @@ export default function LoginRequired() {
         <div className="w-full max-w-md p-8 space-y-6 text-center bg-white rounded-2xl shadow-lg">
             <div className="flex justify-center">
                 <div className="flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full">
-                    <FaLock className="w-8 h-8 text-indigo-600" />
+                    <FaLock className="w-8 h-8 text-[#799EFF]" />
                 </div>
             </div>
 
@@ -27,7 +27,7 @@ export default function LoginRequired() {
                 <Link
                     to="/sign/login"
                     state={{ from: from }}
-                    className="w-full px-4 py-3 text-sm font-semibold text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 text-sm font-semibold text-white bg-[#799EFF] rounded-lg shadow-sm hover:bg-[#4E71FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#799EFF]"
                 >
                     로그인 페이지로 이동
                 </Link>

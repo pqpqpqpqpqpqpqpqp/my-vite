@@ -14,7 +14,7 @@ export default function SignRouter() {
     return (
         <div
             className="flex items-center justify-center min-h-screen bg-cover bg-center"
-            style={{ backgroundImage: "url('/blueblue.jpg')" }}
+            style={{ backgroundImage: "url('/bluesky.jpg')" }}
         >
             <Routes>
                 <Route path="/sign/login" element={<Login />} />

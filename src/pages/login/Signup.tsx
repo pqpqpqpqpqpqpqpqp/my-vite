@@ -137,7 +137,7 @@ export default function Signup() {
                         */}
                         <div>
                             <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">이름</label>
-                            <input id="name" name="name" type="text" required value={formData.name} onChange={handleInputChange} placeholder="홍길동" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" />
+                            <input id="name" name="name" type="text" required value={formData.name} onChange={handleInputChange} placeholder="이름을 입력해주세요" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm" />
                         </div>
 
                         <div>
@@ -151,7 +151,7 @@ export default function Signup() {
                                 max="2025-12-31"
                                 value={formData.birth}
                                 onChange={handleInputChange}
-                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                                className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm"
                             />
                         </div>
 
@@ -167,7 +167,7 @@ export default function Signup() {
                                         value="MALE"
                                         checked={formData.gender === 'MALE'}
                                         onChange={handleInputChange}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                                        className="w-4 h-4 text-[#799EFF] border-gray-300 focus:ring-[#799EFF]"
                                     />
                                     <label htmlFor="male" className="ml-2 text-sm font-medium text-gray-900">남성</label>
                                 </div>
@@ -180,7 +180,7 @@ export default function Signup() {
                                         value="FEMALE"
                                         checked={formData.gender === 'FEMALE'}
                                         onChange={handleInputChange}
-                                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                                        className="w-4 h-4 text-[#799EFF] border-gray-300 focus:ring-[#799EFF]"
                                     />
                                     <label htmlFor="female" className="ml-2 text-sm font-medium text-gray-900">여성</label>
                                 </div>
@@ -197,7 +197,7 @@ export default function Signup() {
                         <label htmlFor="nickname" className="block mb-1 text-sm font-medium text-gray-700">닉네임</label>
                         <div className="flex items-center space-x-2">
                             <div className="relative flex-grow">
-                                <input id="nickname" name="nickname" type="text" required value={formData.nickname} onChange={handleInputChange} placeholder="3~20자의 한글, 영문, 숫자, 특수문자(._-)" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" />
+                                <input id="nickname" name="nickname" type="text" required value={formData.nickname} onChange={handleInputChange} placeholder="3~20자의 한글, 영문, 숫자, 특수문자(._-)" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm" />
                                 {isNicknameChecked && formData.nickname === validatedNickname && (
                                     <FaCheckCircle className="absolute text-green-500 right-3 top-1/2 -translate-y-1/2" />
                                 )}
@@ -209,23 +209,23 @@ export default function Signup() {
                     </div>
                     <div>
                         <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">이메일</label>
-                        <input id="email" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="example@email.com" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" />
+                        <input id="email" name="email" type="email" required value={formData.email} onChange={handleInputChange} placeholder="example@email.com" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm" />
                     </div>
                     <div>
                         <label htmlFor="pw" className="block mb-1 text-sm font-medium text-gray-700">비밀번호</label>
-                        <input id="pw" name="pw" type="password" required value={formData.pw} onChange={handleInputChange} placeholder="영문, 숫자, 특수문자 포함 8~20자" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm" />
+                        <input id="pw" name="pw" type="password" required value={formData.pw} onChange={handleInputChange} placeholder="영문, 숫자, 특수문자 포함 8~20자" className="relative block w-full px-3 py-2 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-[#799EFF] focus:border-[#799EFF] focus:z-10 sm:text-sm" />
                     </div>
                 </fieldset>
 
                 <div className="pt-4">
-                    <button type="submit" disabled={!isFormValid || isLoading} className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md group hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300 disabled:cursor-not-allowed">
+                    <button type="submit" disabled={!isFormValid || isLoading} className="relative flex justify-center w-full px-4 py-2 text-sm font-medium text-white bg-[#799EFF] border border-transparent rounded-md group hover:bg-[#4E71FF] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#799EFF] disabled:bg-[#9EC6F3] disabled:cursor-not-allowed">
                         {isLoading ? '가입하는 중...' : '가입하기'}
                     </button>
                 </div>
             </form>
 
             <p className="mt-6 text-sm text-center">
-                <Link to="/sign/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+                <Link to="/sign/login" className="font-medium text-[#799EFF] hover:text-[#4E71FF]">
                     이미 계정이 있으신가요? 로그인
                 </Link>
             </p>
