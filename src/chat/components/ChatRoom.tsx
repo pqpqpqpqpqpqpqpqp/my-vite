@@ -81,7 +81,7 @@ export default function ChatRoom({
                     return (
                         <div key={m.messageId} className={`bubble-row ${isMine ? 'mine' : 'other'}`}>
                             {/* 상대방 닉네임 표시 */}
-                            {!isMine && <div className="sender-nickname">{m.senderNickname || '상대방'}</div>}
+                            {!isMine && <div className="sender-nickname">{m.senderNickname || '키티짱'}</div>}
 
                             <div className="bubble-container">
                                 {/* 1. 말풍선 본문을 먼저 렌더링합니다. */}
