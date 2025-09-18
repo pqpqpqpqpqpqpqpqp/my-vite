@@ -141,7 +141,7 @@ export default function CopyPlanModal({ isOpen, onClose, tripToCopy }: CopyPlanM
     return (
         // 1. 모달 배경 (Backdrop)
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
             onClick={onClose} // 배경 클릭 시 모달 닫기
         >
             {/* 2. 모달 컨텐츠 패널 */}

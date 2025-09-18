@@ -139,7 +139,7 @@ export default function TripPlanMemberModal({ isOpen, onClose, currentTrip }: Tr
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onClose}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
             <div className="relative w-full max-w-md bg-white rounded-2xl shadow-xl p-6" onClick={e => e.stopPropagation()}>
                 {/* 헤더 */}
                 <div className="flex justify-between items-center border-b pb-3 mb-4">
