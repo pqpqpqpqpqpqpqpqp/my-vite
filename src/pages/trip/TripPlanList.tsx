@@ -43,7 +43,9 @@ function TripItem({ trip }: TripItemProps) {
     const { startDate, endDate, tripId, tripTitle } = trip
     const status = getTripStatus(startDate, endDate);
 
-    const imageUrl = `https://source.unsplash.com/random/400x400/?travel,${tripId}`;
+    const randomImageId = Math.floor(Math.random() * 1085);
+
+    const imageUrl = `https://picsum.photos/id/${randomImageId}/800/600`;
 
     const period = `${startDate.replace(/-/g, '.')} - ${endDate.replace(/-/g, '.')}`;
 
@@ -53,7 +55,7 @@ function TripItem({ trip }: TripItemProps) {
             <div className="bg-white rounded-xl shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 ease-in-out">
                 {/* 이미지 영역 */}
                 <div
-                    className={`h-48 bg-cover bg-center relative ${status.isCompleted ? 'filter grayscale' : ''}`}
+                    className={`h-60 bg-cover bg-center relative ${status.isCompleted ? 'filter grayscale' : ''}`}
                     style={{ backgroundImage: `url(${imageUrl})` }}
                 >
                     {/* 상태 뱃지 */}
@@ -78,7 +80,7 @@ function TripItem({ trip }: TripItemProps) {
                         </Link>
                         {/* 편집 버튼 */}
                         <Link
-                            to={`/trip/plan/detail/${tripId}`} // 편집 페이지 경로로 수정하세요.
+                            to={`/trip/plan/make/detail/${tripId}`}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
                         >
                             편집
@@ -141,7 +143,7 @@ export default function TripPlanList() {
             {/* 헤더 */}
             <header className="sticky top-0 bg-white/80 backdrop-blur-sm z-10 flex justify-between items-center p-5 border-b border-gray-200">
                 <h1 className="text-2xl font-bold text-gray-800">나의 여행</h1>
-                <Link to="/trip/plan/select" className="flex justify-center items-center w-9 h-9 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors">
+                <Link to="/trip/plan/make/select" className="flex justify-center items-center w-9 h-9 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors">
                     <FaPlus />
                 </Link>
             </header>

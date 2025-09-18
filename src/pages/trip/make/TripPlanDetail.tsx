@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import TripPlanMap from "../../../components/trips/TripPlanMap";
 import TripPlaceSearchModal from "../../../components/trips/TripPlaceSearchModal";
 import TripPlaceEditModal from "../../../components/trips/TripPlaceEditModal";
 import type { TripDTO, TripPlaceDTO } from "../../../types/trip";
-import { FaMapMarkedAlt, FaPlus, FaPencilAlt, FaTrash, FaClock } from "react-icons/fa";
+import { FaMapMarkedAlt, FaPlus, FaPencilAlt, FaTrash, FaClock, FaCheck, FaArrowLeft } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { PLAN_URL } from "../../../config";
@@ -228,6 +228,32 @@ export default function TripPlanDetail() {
                 {/* 우측: 일정 계획 영역 */}
                 <div className="lg:w-1/2 w-full">
                     {/* ... 헤더 및 완료 버튼 ... */}
+                    <div className="bg-white p-6 rounded-2xl shadow-md border mb-6 top-6 z-10">
+                        <div className="flex justify-between items-center">
+                            {/* 뒤로가기 버튼과 제목 */}
+                            <div className="flex items-center gap-4">
+                                <Link to="/trip/plan/list" className="p-2 text-gray-500 hover:text-gray-800">
+                                    <FaArrowLeft size={20} />
+                                </Link>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-gray-800 truncate">{trip?.tripTitle}</h1>
+                                    <p className="text-gray-500 mt-1">{trip?.startDate} ~ {trip?.endDate}</p>
+                                </div>
+                            </div>
+                            
+                            {/* 완료 버튼 */}
+                            <button
+                                onClick={() => {
+                                    toast.success("여행 계획이 저장되었습니다!");
+                                    navi('/trip/plan/list');
+                                }}
+                                className="px-5 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-sm flex items-center gap-2"
+                            >
+                                <FaCheck />
+                                <span>완료</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <DragDropContext onDragEnd={handleDragEnd}>
                         <div className="space-y-6">
